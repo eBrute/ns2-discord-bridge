@@ -2,79 +2,26 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/bwmarrin/discordgo"
-)
-
-// Variables used for command line parameters
-var (
-	Token string
-	BotID string
+	// "fmt"
+	// "log"
 )
 
 
+// Parse command line arguments
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
+	address = ":8080"
 	flag.Parse()
 }
 
 
 func main() {
 
-	// Create a new Discord session using the provided bot token.
-	session, err := discordgo.New("Bot " + Token)
-	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
-	}
+	startDiscordBot()
+	
+	startHTTPServer()
 
-	// Get the account information.
-	user, err := session.User("@me")
-	if err != nil {
-		fmt.Println("error obtaining account details,", err)
-	}
-
-	// Store the account ID for later use.
-	BotID = user.ID
-
-	// Register messageCreate as a callback for the messageCreate events.
-	session.AddHandler(messageCreate)
-
-	// Open the websocket and begin listening.
-	err = session.Open()
-	if err != nil {
-		fmt.Println("error opening connection,", err)
-		return
-	}
-
-	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
-	// Simple way to keep program running until CTRL-C is pressed.
+	// keep program running until CTRL-C is pressed.
 	<-make(chan struct{})
 	return
-}
-
-
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the autenticated bot has access to.
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-
-	// Ignore all messages created by the bot itself
-	if m.Author.ID == BotID {
-		return
-	}
-
-	// If the message is "ping" reply with "Pong!"
-	if m.Content == "ping" {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Pong!")
-		return
-	}
-
-	// If the message is "pong" reply with "Ping!"
-	if m.Content == "pong" {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Ping!")
-		return
-	}
-
-	_, _ = s.ChannelMessageEdit(m.ChannelID, m.ID, "kittens")
-	// _ = s.ChannelMessageDelete(m.ChannelID, m.ID)
 }
