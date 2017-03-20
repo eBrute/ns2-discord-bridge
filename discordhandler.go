@@ -3,18 +3,29 @@ package main
 import (
 	"fmt"
 	// "log"
+	"strings"
+	"errors"
 	"github.com/bwmarrin/discordgo"
 )
 
 var (
 	BotID string
 	Token string
+	session *discordgo.Session
+	channels []Channel
 )
 
 
+type Channel struct {
+	channelID string
+	server string // the server associated with the channel
+}
+
+
 func startDiscordBot() {
-	// Create a new Discord session using the provided bot token.
-	session, err := discordgo.New("Bot " + Token)
+	
+	var err error
+	session, err = discordgo.New("Bot " + Token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -28,7 +39,7 @@ func startDiscordBot() {
 
 	BotID = user.ID
 
-	session.AddHandler(pingpong)
+	session.AddHandler(chatCommandHandler)
 
 	// Open the websocket and begin listening.
 	err = session.Open()
@@ -38,30 +49,57 @@ func startDiscordBot() {
 	}
 
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+	
+	channels = make([]Channel, 0, 40)
 }
 
 
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the autenticated bot has access to.
-func pingpong(s *discordgo.Session, m *discordgo.MessageCreate) {
+func getChannelForServer(server string) (channelID string, err error) {
+	for _, channel := range channels {
+		if channel.server == server {
+			channelID = channel.channelID
+			return
+		}
+	}
+	err =  errors.New("no such server")
+	fmt.Printf("%d channels", len(channels))
+	return
+}
 
+
+func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == BotID {
 		return
 	}
 
-	// If the message is "ping" reply with "Pong!"
-	if m.Content == "ping" {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Pong!")
+	if strings.HasPrefix(m.Content, "!link") {
+		fields := strings.Fields(m.Content)
+		if len(fields) < 2 {
+			_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
+			return
+		}
+		
+		channels = append(channels, Channel{m.ChannelID, fields[1]}) // TODO range check(?)
+		_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + fields[1])
 		return
 	}
+}
 
-	// If the message is "pong" reply with "Ping!"
-	if m.Content == "pong" {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Ping!")
-		return
-	}
 
-	_, _ = s.ChannelMessageEdit(m.ChannelID, m.ID, "kittens")
-	// _ = s.ChannelMessageDelete(m.ChannelID, m.ID)
+func forwardMessage(server string, username string, message string) {
+		channelID, err := getChannelForServer(server)
+		fmt.Println("channelid:", channelID)
+		if err != nil {
+			fmt.Println("Could not get a channel for", server, ". Link a channel first with '!link <servername>'")
+			return
+		}
+		if session == nil {
+			fmt.Println("Could not find a discord session")
+			return
+		}
+		
+		
+		_, _ = session.ChannelMessageSend(channelID, username + ": " + message)
 }

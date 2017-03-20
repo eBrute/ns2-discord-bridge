@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http" 
 )
@@ -21,9 +20,12 @@ func startHTTPServer() {
 func httpHandler(w http.ResponseWriter, request *http.Request) {
 	err := request.ParseForm() 
 	if err != nil{
-	       panic(err)
+	       log.Print(err)
 	}
-	log.Println(request.Form)
-	params := request.PostFormValue("params")
-	fmt.Fprintf(w, "params, %q", params)
+	
+	server := request.PostFormValue("server")
+	username := request.PostFormValue("username")
+	message := request.PostFormValue("message")
+	
+	forwardMessage(server, username, message)
 }
