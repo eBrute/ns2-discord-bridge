@@ -10,10 +10,10 @@ var (
 )
 
 func startHTTPServer() {
-	http.HandleFunc("/hello", httpHandler)
+	http.HandleFunc("/discordbridge", httpHandler)
 
+	log.Println("Listening for chat messages on ", address)
 	log.Fatal(http.ListenAndServe(address, nil))
-
 }
 
 
