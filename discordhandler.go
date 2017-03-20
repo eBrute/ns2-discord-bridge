@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	// "log"
+	// "fmt"
+	"log"
 	"strings"
 	"strconv"
 	// "errors"
@@ -22,14 +22,14 @@ func startDiscordBot() {
 	var err error
 	session, err = discordgo.New("Bot " + Token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		log.Println("error creating Discord session,", err)
 		return
 	}
 
 	// Get the account information.
 	user, err := session.User("@me")
 	if err != nil {
-		fmt.Println("error obtaining account details,", err)
+		log.Println("error obtaining account details,", err)
 	}
 
 	BotID = user.ID
@@ -40,11 +40,11 @@ func startDiscordBot() {
 	// Open the websocket and begin listening.
 	err = session.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
+		log.Println("error opening connection,", err)
 		return
 	}
 
-	fmt.Println("Bot is now running. Press CTRL-C to exit.")
+	log.Println("Discord Bot is now running.")
 }
 
 
@@ -64,6 +64,7 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		server := fields[1]
 		channels[server] = m.ChannelID
 		_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + server)
+		log.Println("Linked channelID " + m.ChannelID + " to server " + server)
 		return
 	}
 	
@@ -97,13 +98,13 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	
 	if strings.HasPrefix(m.Content, "!help") || strings.HasPrefix(m.Content, "!commands") {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "```" +`
+		_, _ = s.ChannelMessageSend(m.ChannelID, "```" + `
 !help                            - prints this help
 !commands                        - prints this help
 !link <server>                   - links server to this channel
 !unlink <server> [<server2> ..]  - unlinks server(s) from this channel
 !unlink                          - unlinks all servers from this channel
-`+"```")
+` + "```")
 		return
 	}
 }
@@ -112,9 +113,9 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 func forwardMessage(server string, username string, message string) {
 		channelID, ok := channels[server]
 		if !ok {
-			fmt.Println("Could not get a channel for", server, ". Link a channel first with '!link <servername>'")
+			log.Println("Could not get a channel for", server, ". Link a channel first with '!link <servername>'")
 			return
 		}
 	
-		_, _ = session.ChannelMessageSend(channelID, username + ": " + message)
+		_, _ = session.ChannelMessageSend(channelID, "**" + username + ":** " + message)
 }
