@@ -89,6 +89,14 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				}
 			}
 		
+		case "list":
+			listAll := len(fields) > 1  && fields[1] == "all"
+			for server, id := range channels {
+				if listAll || id == m.ChannelID {
+					_, _ = s.ChannelMessageSend(m.ChannelID, "Server '" + server + "' is linked to channel <#" + id + "> (" + id + ")")
+				}
+			}
+		
 		case "help": fallthrough
 		case "commands": fallthrough
 		default:
@@ -134,6 +142,8 @@ func getHelpMessage() string {
 !link <server>                   - links server to this channel
 !unlink <server> [<server2> ..]  - unlinks server(s) from this channel
 !unlink                          - unlinks all servers from this channel
+!list                            - prints all servers linked to this channel
+!list all                        - prints all linked servers
 ` + "```"
 }
 
