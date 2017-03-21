@@ -2,3 +2,4 @@
 *.exe
 /ns2-discord-bridge
 *.save
+/config.toml
