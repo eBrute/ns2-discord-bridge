@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	BotID string
+	botID string
 	session *discordgo.Session
 	commandPattern *regexp.Regexp
 )
@@ -32,7 +32,7 @@ func startDiscordBot() {
 		log.Println("error obtaining account details,", err)
 	}
 
-	BotID = user.ID
+	botID = user.ID
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
 
 	session.AddHandler(chatCommandHandler)
@@ -50,7 +50,7 @@ func startDiscordBot() {
 
 func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
-	if m.Author.ID == BotID {
+	if m.Author.ID == botID {
 		return
 	}
 
