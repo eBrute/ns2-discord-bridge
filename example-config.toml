@@ -1,0 +1,11 @@
+[discord]
+token = "yourDiscordBotToken"
+
+[httpserver]
+address = ":8080"
+
+[servers.example1]
+channelID = "2355434534634345345"
+
+[servers.example2]
+channelID = "1645231543324534623"

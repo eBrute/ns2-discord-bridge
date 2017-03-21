@@ -4,6 +4,7 @@ import (
     "log"
     "os"
 	"io/ioutil"
+    "flag"
 	"github.com/naoina/toml"
 )
 
@@ -23,13 +24,28 @@ type Channel struct {
 }
 
 var Config Configuration
+var configFile string
+
+
+// Parse command line arguments
+func init() {
+	flag.StringVar(&configFile, "c", "config.toml", "Configuration File")
+	flag.Parse()
+}
+
 
 func main() {
-	f, err := os.Open("config.toml")
+    if _, err := os.Stat(configFile); os.IsNotExist(err) {
+        log.Println("No configuration file found in", configFile)
+        return
+    }
+    
+	f, err := os.Open(configFile)
     if err != nil {
         panic(err)
     }
     defer f.Close()
+    log.Println("Reading config file", configFile)
     buf, err := ioutil.ReadAll(f)
     if err != nil {
         panic(err)
@@ -41,7 +57,7 @@ func main() {
     for k, v := range Config.Servers {
         log.Println("Linked server", k, "to channel", v.ChannelID)
     }
-        
+    
 	startDiscordBot()
 	startHTTPServer()
 }
