@@ -6,6 +6,7 @@ import (
 	"strings"
 	"strconv"
 	// "errors"
+	"regexp"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -14,6 +15,7 @@ var (
 	Token string
 	session *discordgo.Session
 	channels map[string]string // maps servers to channelIds
+	commandPattern *regexp.Regexp
 )
 
 
@@ -34,6 +36,7 @@ func startDiscordBot() {
 
 	BotID = user.ID
 	channels = make(map[string]string)
+	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
 
 	session.AddHandler(chatCommandHandler)
 
@@ -49,68 +52,77 @@ func startDiscordBot() {
 
 
 func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == BotID {
 		return
 	}
 
-	if strings.HasPrefix(m.Content, "!link") {
-		fields := strings.Fields(m.Content)
-		if len(fields) < 2 {
-			_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
-			return
-		}
-		server := fields[1]
-		channels[server] = m.ChannelID
-		_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + server)
-		log.Println("Linked channelID " + m.ChannelID + " to server " + server)
+	commandMatches := commandPattern.FindStringSubmatch(m.Content)
+	
+	if len(commandMatches) == 0 {
+		// this is a regular message
 		return
 	}
-	
-	if strings.HasPrefix(m.Content, "!unlink") {
-		fields := strings.Fields(m.Content)
-		count := 0
-		if len(fields) > 1 {
-			for i := 1; i < len(fields); i++ {
-				server := fields[i]
-				if _, ok := channels[server]; ok {
-					delete(channels, server)
-					count++
-				}
+
+	fields := strings.Fields(m.Content)
+	switch commandMatches[1] {
+		
+		case "link":
+			if len(fields) < 2 {
+				_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
+				return
 			}
+			server := fields[1]
+			channels[server] = m.ChannelID
+			_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + server)
+			log.Println("Linked channelID " + m.ChannelID + " to server " + server)
 			
-			_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked " + strconv.Itoa(count) +" channel(s)")
-		} else {
-			for server, channelID := range channels {
-				if channelID == m.ChannelID {
-					delete(channels, server)
-					count++
+		case "unlink":
+			count := 0
+			if len(fields) > 1 {
+				for i := 1; i < len(fields); i++ {
+					server := fields[i]
+					if _, ok := channels[server]; ok {
+						delete(channels, server)
+						count++
+					}
+				}
+				
+				_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked " + strconv.Itoa(count) +" channel(s)")
+			} else {
+				for server, channelID := range channels {
+					if channelID == m.ChannelID {
+						delete(channels, server)
+						count++
+					}
+				}
+				if count > 0 {
+					_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
+				} else {
+					_, _ = s.ChannelMessageSend(m.ChannelID, "Channel was not linked")
 				}
 			}
-			if count > 0 {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
-			} else {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "Channel was not linked")
-			}
-		}
-		return
+		
+		case "help": fallthrough
+		case "commands": fallthrough
+		default:
+			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
 	}
-	
-	if strings.HasPrefix(m.Content, "!help") || strings.HasPrefix(m.Content, "!commands") {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "```" + `
+}
+
+
+func getHelpMessage() string {
+	return "```" + `
 !help                            - prints this help
 !commands                        - prints this help
 !link <server>                   - links server to this channel
 !unlink <server> [<server2> ..]  - unlinks server(s) from this channel
 !unlink                          - unlinks all servers from this channel
-` + "```")
-		return
-	}
+` + "```"
 }
 
 
-func forwardMessage(server string, username string, message string) {
+func forwardMessageToDiscord(server string, username string, message string) {
 		channelID, ok := channels[server]
 		if !ok {
 			log.Println("Could not get a channel for", server, ". Link a channel first with '!link <servername>'")

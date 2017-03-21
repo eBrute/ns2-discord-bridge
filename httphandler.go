@@ -28,5 +28,5 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	player := request.PostFormValue("player")
 	message := request.PostFormValue("message")
 	
-	forwardMessage(server, player, message)
+	forwardMessageToDiscord(server, player, message)
 }
