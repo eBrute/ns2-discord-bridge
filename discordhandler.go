@@ -72,31 +72,17 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
 				return
 			}
-			server := fields[1]
-			channels[server] = m.ChannelID
-			_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + server)
-			log.Println("Linked channelID " + m.ChannelID + " to server " + server)
+			for _, server := range fields[1:] {
+				linkChannelIDToServer(m.ChannelID, server)
+				_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + server)
+			}
 			
 		case "unlink":
-			count := 0
 			if len(fields) > 1 {
-				for i := 1; i < len(fields); i++ {
-					server := fields[i]
-					if _, ok := channels[server]; ok {
-						delete(channels, server)
-						count++
-					}
-				}
-				
+				count := unlinkChannelByServername(fields[1:])
 				_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked " + strconv.Itoa(count) +" channel(s)")
 			} else {
-				for server, channelID := range channels {
-					if channelID == m.ChannelID {
-						delete(channels, server)
-						count++
-					}
-				}
-				if count > 0 {
+				if unlinkChannelByChannelID(m.ChannelID) > 0 {
 					_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
 				} else {
 					_, _ = s.ChannelMessageSend(m.ChannelID, "Channel was not linked")
@@ -108,6 +94,36 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
 	}
+}
+
+
+func linkChannelIDToServer(channelID string, server string) {
+		channels[server] = channelID
+		log.Println("Linked channelID " + channelID + " to server " + server)
+}
+
+
+func unlinkChannelByServername(servers []string) (count int) {
+	for _, server := range servers {
+		if _, ok := channels[server]; ok {
+			log.Println("Uninked channelID " + channels[server] + " from server " + server)
+			delete(channels, server)
+			count++
+		}
+	}
+	return
+}
+
+
+func unlinkChannelByChannelID(ID string) (count int) {
+	for server, channelID := range channels {
+		if channelID == ID {
+			log.Println("Uninked channelID " + channelID + " from server " + server)
+			delete(channels, server)
+			count++
+		}
+	}
+	return
 }
 
 
