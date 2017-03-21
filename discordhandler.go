@@ -55,7 +55,7 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if strings.HasPrefix(m.Content, "!link") {
+	if strings.HasPrefix(m.Content, "!link ") {
 		fields := strings.Fields(m.Content)
 		if len(fields) < 2 {
 			_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
@@ -68,7 +68,7 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	
-	if strings.HasPrefix(m.Content, "!unlink") {
+	if strings.HasPrefix(m.Content, "!unlink ") {
 		fields := strings.Fields(m.Content)
 		count := 0
 		if len(fields) > 1 {
@@ -97,7 +97,7 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	
-	if strings.HasPrefix(m.Content, "!help") || strings.HasPrefix(m.Content, "!commands") {
+	if strings.HasPrefix(m.Content, "!help ") || strings.HasPrefix(m.Content, "!commands ") {
 		_, _ = s.ChannelMessageSend(m.ChannelID, "```" + `
 !help                            - prints this help
 !commands                        - prints this help
