@@ -5,16 +5,12 @@ import (
 	"net/http" 
 )
 
-var (
-	address string
-)
-
 func startHTTPServer() {
 	http.HandleFunc("/discordbridge", httpHandler)
 
-	log.Println("Listening for chat messages on", address)
+	log.Println("Listening for chat messages on", Config.Httpserver.Address)
 	log.Println("Press CTRL-C to exit.")
-	log.Fatal(http.ListenAndServe(address, nil))
+	log.Fatal(http.ListenAndServe(Config.Httpserver.Address, nil))
 }
 
 
