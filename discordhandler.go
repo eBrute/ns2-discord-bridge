@@ -88,7 +88,7 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		
 		case "list":
 			listAll := len(fields) > 1  && fields[1] == "all"
-			for server, channel := range Config.Servers {
+			for server, channel := range Servers {
 				id := channel.ChannelID
 				if listAll || id == m.ChannelID {
 					_, _ = s.ChannelMessageSend(m.ChannelID, "Server '" + server + "' is linked to channel <#" + id + "> (" + id + ")")
@@ -104,16 +104,16 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 
 func linkChannelIDToServer(channelID string, server string) {
-		Config.Servers[server] = Channel{channelID}
+		Servers[server] = &Channel{ChannelID: channelID}
 		log.Println("Linked channelID " + channelID + " to server " + server)
 }
 
 
 func unlinkChannelByServername(servers []string) (count int) {
 	for _, server := range servers {
-		if _, ok := Config.Servers[server]; ok {
-			log.Println("Uninked channelID " + Config.Servers[server].ChannelID + " from server " + server)
-			delete(Config.Servers, server)
+		if _, ok := Servers[server]; ok {
+			log.Println("Uninked channelID " + Servers[server].ChannelID + " from server " + server)
+			delete(Servers, server)
 			count++
 		}
 	}
@@ -122,10 +122,10 @@ func unlinkChannelByServername(servers []string) (count int) {
 
 
 func unlinkChannelByChannelID(ID string) (count int) {
-	for server, channel := range Config.Servers {
+	for server, channel := range Servers {
 		if channel.ChannelID == ID {
 			log.Println("Uninked channelID " + channel.ChannelID + " from server " + server)
-			delete(Config.Servers, server)
+			delete(Servers, server)
 			count++
 		}
 	}
@@ -147,7 +147,7 @@ func getHelpMessage() string {
 
 
 func forwardMessageToDiscord(server string, username string, message string) {
-		channel, ok := Config.Servers[server]
+		channel, ok := Servers[server]
 		if !ok {
 			log.Println("Could not get a channel for", server, ". Link a channel first with '!link <servername>'")
 			return

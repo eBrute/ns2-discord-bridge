@@ -16,15 +16,23 @@ type Configuration struct {
     Httpserver struct {
         Address string
     }
-    Servers map[string]Channel
+    Servers map[string]ChannelConfig
 }
 
-type Channel struct {
+type ChannelConfig struct {
     ChannelID string
+    Admins []string
 }
 
 var Config Configuration
 var configFile string
+
+var Servers map[string]*Channel
+
+type Channel struct {
+    ChannelID string
+    Admins []string
+}
 
 
 // Parse command line arguments
@@ -54,8 +62,17 @@ func main() {
         panic(err)
     }
     
-    for k, v := range Config.Servers {
-        log.Println("Linked server", k, "to channel", v.ChannelID)
+    Servers = make(map[string]*Channel)
+    for serverName, v := range Config.Servers {
+        Servers[serverName] = &Channel{
+            ChannelID : v.ChannelID,
+            Admins:make([]string, 0),
+        }
+        for _, admin := range v.Admins {
+            Servers[serverName].Admins = append(Servers[serverName].Admins, admin)
+        }
+        log.Println(Servers[serverName])
+        log.Println("Linked server", serverName, "to channel", v.ChannelID)
     }
     
 	startDiscordBot()

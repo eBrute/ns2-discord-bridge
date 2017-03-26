@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"net/http" 
+	"net/http"
 )
 
 func startHTTPServer() {
@@ -16,7 +16,7 @@ func startHTTPServer() {
 
 func httpHandler(w http.ResponseWriter, request *http.Request) {
 	err := request.ParseForm() 
-	if err != nil{
+	if err != nil {
 	       log.Print(err)
 	}
 	
