@@ -35,7 +35,6 @@ var Servers map[string]*Server
 type Server struct {
     ChannelID string
     Admins []string
-    Password string
     Outbound chan Command
     Mux sync.Mutex
     ActiveThread int
