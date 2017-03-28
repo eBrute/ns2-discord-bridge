@@ -56,7 +56,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	if len(commandMatches) == 0 { // this is a regular message
 		
-		server, ok := getServerLinkedToChannel(m.ChannelID)
+		server, ok := GetServerLinkedToChannel(m.ChannelID)
 		if !ok {
 			// this channel isnt linked to any server, so just do nothing
 			return
@@ -74,7 +74,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// message was a discord command
 	fields := strings.Fields(m.Content)
-	server, isServerLinked := getServerLinkedToChannel(m.ChannelID)
+	server, isServerLinked := GetServerLinkedToChannel(m.ChannelID)
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
@@ -91,7 +91,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				 }
 				 return
 			}
-			linkChannelIDToServer(m.ChannelID, fields[1])
+			LinkChannelIDToServer(m.ChannelID, fields[1])
 			_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to '" + fields[1] + "'")
 
 		case "list":
@@ -116,7 +116,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	switch commandMatches[1] {
 		case "unlink":
-			unlinkChannelFromServer(server)
+			UnlinkChannelFromServer(server)
 			_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
 			
 		case "rcon":
@@ -132,31 +132,6 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
 	}
-}
-
-
-func linkChannelIDToServer(channelID string, server string) {
-		Servers[server] = CreateChannel(server, channelID)
-		log.Println("Linked channelID " + channelID + " to server " + server)
-}
-
-
-func getServerLinkedToChannel(channelID string) (server string, success bool) {
-	for k, v := range Servers {
-		if v.ChannelID == channelID {
-			return k, true
-		}
-	}
-	return
-}
-
-func unlinkChannelFromServer(server string) (success bool) {
-	if _, ok := Servers[server]; ok {
-		log.Println("Uninked channelID " + Servers[server].ChannelID + " from server " + server)
-		delete(Servers, server)
-		success = true
-	}
-	return
 }
 
 

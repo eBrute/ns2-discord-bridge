@@ -18,12 +18,13 @@ type Configuration struct {
     Httpserver struct {
         Address string
     }
-    Servers map[string]ChannelConfig
+    Servers map[string]ServerConfig
 }
 
-type ChannelConfig struct {
+type ServerConfig struct {
     ChannelID string
     Admins []string
+    Password string
 }
 
 var Config Configuration
@@ -34,6 +35,7 @@ var Servers map[string]*Server
 type Server struct {
     ChannelID string
     Admins []string
+    Password string
     Outbound chan Command
     Mux sync.Mutex
     ActiveThread int
@@ -47,13 +49,42 @@ type Command struct {
 }
 
 
-func CreateChannel(serverNamestring , channelID string) *Server {
-    return &Server{
-        ChannelID : channelID,
+func CreateServer(serverName string) *Server {
+    server := &Server{
         Admins : make([]string, 0),
         Outbound : make(chan Command),
     }
+    Servers[serverName] = server
+    return server
 }
+
+
+func LinkChannelIDToServer(channelID string, serverName string) {
+	server := CreateServer(serverName)
+    server.ChannelID = channelID
+	log.Println("Linked channelID " + channelID + " to server " + serverName)
+}
+
+
+func GetServerLinkedToChannel(channelID string) (server string, success bool) {
+	for k, v := range Servers {
+		if v.ChannelID == channelID {
+			return k, true
+		}
+	}
+	return
+}
+
+
+func UnlinkChannelFromServer(server string) (success bool) {
+	if _, ok := Servers[server]; ok {
+		log.Println("Uninked channelID " + Servers[server].ChannelID + " from server " + server)
+		delete(Servers, server)
+		success = true
+	}
+	return
+}
+
 
 // Parse command line arguments
 func init() {
@@ -84,7 +115,8 @@ func main() {
     
     Servers = make(map[string]*Server)
     for serverName, v := range Config.Servers {
-        Servers[serverName] = CreateChannel(serverName, v.ChannelID)
+        server := CreateServer(serverName)
+        server.ChannelID = v.ChannelID
         for _, admin := range v.Admins {
             Servers[serverName].Admins = append(Servers[serverName].Admins, admin)
         }
