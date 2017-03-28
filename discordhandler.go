@@ -84,9 +84,9 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if ok {
 				 if server == fields[1] {
 					 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel was already linked to '" + server + "'")
-					 return
+				 } else {
+					 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel is already linked to '" + server +"'. Use !unlink first.")
 				 }
-				 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel is already linked to '" + server +"'. Use !unlink first.")
 				 return
 			}
 			linkChannelIDToServer(m.ChannelID, fields[1])
