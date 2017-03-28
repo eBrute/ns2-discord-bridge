@@ -1,11 +1,8 @@
 package main
 
 import (
-	// "fmt"
 	"log"
 	"strings"
-	"strconv"
-	// "errors"
 	"regexp"
 	"github.com/bwmarrin/discordgo"
 )
@@ -35,7 +32,7 @@ func startDiscordBot() {
 	botID = user.ID
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
 
-	session.AddHandler(chatCommandHandler)
+	session.AddHandler(chatEventHandler)
 
 	// Open the websocket and begin listening.
 	err = session.Open()
@@ -48,31 +45,34 @@ func startDiscordBot() {
 }
 
 
-func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == botID {
 		return
 	}
-
-	server, success := getServerLinkedToChannel(m.ChannelID)
-	if !success {
-		log.Println("not linked", m.ChannelID)
-		return
-	}
-	log.Println("sending to", server)
+	
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
-	if len(commandMatches) == 0 {
-		// this is a regular message
+	if len(commandMatches) == 0 { // this is a regular message
+		
+		server, ok := getServerLinkedToChannel(m.ChannelID)
+		if !ok {
+			// this channel isnt linked to any server, so just do nothing
+			return
+		}
+		
 		cmd := Command{
 			Type: "chat",
 			User: m.Author.Username,
 			Content: m.Content,
 		}
 		Servers[server].Outbound <- cmd
+		// TODO either make sure server is listening or have a timer clear the channel after some time
 		return
 	}
 
+	// message was a discord command
 	fields := strings.Fields(m.Content)
 	switch commandMatches[1] {
 		case "link":
@@ -80,21 +80,23 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
 				return
 			}
-			for _, server := range fields[1:] {
-				linkChannelIDToServer(m.ChannelID, server)
-				_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to " + server)
+			server, ok := getServerLinkedToChannel(m.ChannelID)
+			if ok {
+				 if server == fields[1] {
+					 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel was already linked to \"" + server + "\"")
+					 return
+				 }
+				 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel is already linked to \"" + server +"\". Use !unlink first.")
+				 return
 			}
+			linkChannelIDToServer(m.ChannelID, fields[1])
+			_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to \"" + fields[1] + "\"")
 			
 		case "unlink":
-			if len(fields) > 1 {
-				count := unlinkChannelByServername(fields[1:])
-				_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked " + strconv.Itoa(count) +" channel(s)")
+			if unlinkChannelByChannelID(m.ChannelID) {
+				_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
 			} else {
-				if unlinkChannelByChannelID(m.ChannelID) > 0 {
-					_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
-				} else {
-					_, _ = s.ChannelMessageSend(m.ChannelID, "Channel was not linked")
-				}
+				_, _ = s.ChannelMessageSend(m.ChannelID, "Channel is not linked")
 			}
 		
 		case "list":
@@ -130,24 +132,12 @@ func getServerLinkedToChannel(channelID string) (server string, success bool) {
 }
 
 
-func unlinkChannelByServername(servers []string) (count int) {
-	for _, server := range servers {
-		if _, ok := Servers[server]; ok {
-			log.Println("Uninked channelID " + Servers[server].ChannelID + " from server " + server)
-			delete(Servers, server)
-			count++
-		}
-	}
-	return
-}
-
-
-func unlinkChannelByChannelID(ID string) (count int) {
+func unlinkChannelByChannelID(ID string) (success bool) {
 	for server, channel := range Servers {
 		if channel.ChannelID == ID {
 			log.Println("Uninked channelID " + channel.ChannelID + " from server " + server)
 			delete(Servers, server)
-			count++
+			return true
 		}
 	}
 	return
@@ -159,9 +149,8 @@ func getHelpMessage() string {
 !help                            - prints this help
 !commands                        - prints this help
 !link <server>                   - links server to this channel
-!unlink <server> [<server2> ..]  - unlinks server(s) from this channel
-!unlink                          - unlinks all servers from this channel
-!list                            - prints all servers linked to this channel
+!unlink                          - unlinks this channel
+!list                            - prints the server linked to this channel
 !list all                        - prints all linked servers
 ` + "```"
 }
