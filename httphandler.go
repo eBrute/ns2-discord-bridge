@@ -21,16 +21,26 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	if err != nil {
 	       log.Print(err)
 	}
-	server := request.PostFormValue("server")
-	if server == "" { // key not present
+
+	serverName := request.PostFormValue("server")
+	if serverName == "" { // key not present
+		return
+	}
+
+	server, ok := Servers[serverName]
+	if !ok {
+		log.Println("Recieved message but could not get a channel for '" + serverName + "'. Link a channel first with '!link <servername>'")
 		return
 	}
 	
-	Servers[server].Mux.Lock()
-	Servers[server].ActiveThread++
-	ThisThreadNummer := Servers[server].ActiveThread
-	Servers[server].Mux.Unlock()
+	// announce that we are now responsible for the response
+	// all other threads will stop themselves
+	server.Mux.Lock()
+	server.ActiveThread++
+	ThisThreadNummer := server.ActiveThread
+	server.Mux.Unlock()
 	
+	// handle the incoming request
 	switch cmdtype := request.PostFormValue("type"); cmdtype {
 		case "init" : // nothing to do, just keep the connection
 		case "chat" :
@@ -40,22 +50,21 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		default: return
 	}
 	
+	// build a response
 	for {
 		select {
-		case cmd := <-Servers[server].Outbound :
-			// send response with q to game server
-			log.Println("Found",cmd)
+		case cmd := <-server.Outbound :
 			js, err := json.Marshal(cmd)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.Write(js)
-			log.Println("Sending", js)
 			return
+			
 		default :
 			time.Sleep(time.Duration(100) * time.Millisecond)
-			if ThisThreadNummer != Servers[server].ActiveThread {
+			if ThisThreadNummer != server.ActiveThread {
 				return
 			}
 		}
