@@ -157,11 +157,11 @@ func getHelpMessage() string {
 
 
 func forwardMessageToDiscord(server string, username string, message string) {
-		channel, ok := Servers[server]
-		if !ok {
-			log.Println("Could not get a channel for", server, ". Link a channel first with '!link <servername>'")
-			return
-		}
-	
-		_, _ = session.ChannelMessageSend(channel.ChannelID, "**" + username + ":** " + message)
+	channel, ok := Servers[server]
+	if !ok {
+		log.Println("Recieved message but could not get a channel for", server, ". Link a channel first with '!link <servername>'")
+		return
+	}
+
+	_, _ = session.ChannelMessageSend(channel.ChannelID, "**" + username + ":** " + message)
 }
