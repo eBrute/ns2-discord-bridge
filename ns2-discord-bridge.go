@@ -5,6 +5,8 @@ import (
     "os"
 	"io/ioutil"
     "flag"
+    "sync"
+    "time"
 	"github.com/naoina/toml"
 )
 
@@ -27,13 +29,31 @@ type ChannelConfig struct {
 var Config Configuration
 var configFile string
 
-var Servers map[string]*Channel
+var Servers map[string]*Server
 
-type Channel struct {
+type Server struct {
     ChannelID string
     Admins []string
+    Outbound chan Command
+    Mux sync.Mutex
+    ActiveThread int
+    Timeout time.Duration
 }
 
+type Command struct {
+    Type    string `json:"type"`
+    User    string `json:"user"`
+    Content string `json:"content"`
+}
+
+
+func CreateChannel(serverNamestring , channelID string) *Server {
+    return &Server{
+        ChannelID : channelID,
+        Admins : make([]string, 0),
+        Outbound : make(chan Command),
+    }
+}
 
 // Parse command line arguments
 func init() {
@@ -62,12 +82,9 @@ func main() {
         panic(err)
     }
     
-    Servers = make(map[string]*Channel)
+    Servers = make(map[string]*Server)
     for serverName, v := range Config.Servers {
-        Servers[serverName] = &Channel{
-            ChannelID : v.ChannelID,
-            Admins:make([]string, 0),
-        }
+        Servers[serverName] = CreateChannel(serverName, v.ChannelID)
         for _, admin := range v.Admins {
             Servers[serverName].Admins = append(Servers[serverName].Admins, admin)
         }

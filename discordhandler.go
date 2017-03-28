@@ -54,16 +54,27 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	server, success := getServerLinkedToChannel(m.ChannelID)
+	if !success {
+		log.Println("not linked", m.ChannelID)
+		return
+	}
+	log.Println("sending to", server)
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
 	if len(commandMatches) == 0 {
 		// this is a regular message
+		cmd := Command{
+			Type: "chat",
+			User: m.Author.Username,
+			Content: m.Content,
+		}
+		Servers[server].Outbound <- cmd
 		return
 	}
 
 	fields := strings.Fields(m.Content)
 	switch commandMatches[1] {
-		
 		case "link":
 			if len(fields) < 2 {
 				_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
@@ -104,8 +115,18 @@ func chatCommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 
 func linkChannelIDToServer(channelID string, server string) {
-		Servers[server] = &Channel{ChannelID: channelID}
+		Servers[server] = CreateChannel(server, channelID)
 		log.Println("Linked channelID " + channelID + " to server " + server)
+}
+
+
+func getServerLinkedToChannel(channelID string) (server string, success bool) {
+	for k, v := range Servers {
+		if v.ChannelID == channelID {
+			return k, true
+		}
+	}
+	return
 }
 
 
