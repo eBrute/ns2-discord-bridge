@@ -74,14 +74,16 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// message was a discord command
 	fields := strings.Fields(m.Content)
+	server, isServerLinked := getServerLinkedToChannel(m.ChannelID)
+	
+	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
 		case "link":
 			if len(fields) < 2 {
 				_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
 				return
 			}
-			server, ok := getServerLinkedToChannel(m.ChannelID)
-			if ok {
+			if isServerLinked {
 				 if server == fields[1] {
 					 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel was already linked to '" + server + "'")
 				 } else {
@@ -91,14 +93,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			linkChannelIDToServer(m.ChannelID, fields[1])
 			_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to '" + fields[1] + "'")
-			
-		case "unlink":
-			if unlinkChannelByChannelID(m.ChannelID) {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
-			} else {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "Channel is not linked")
-			}
-		
+
 		case "list":
 			listAll := len(fields) > 1  && fields[1] == "all"
 			for server, channel := range Servers {
@@ -107,9 +102,33 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 					_, _ = s.ChannelMessageSend(m.ChannelID, "Server '" + server + "' is linked to channel <#" + id + "> (" + id + ")")
 				}
 			}
-		
+			
 		case "help": fallthrough
-		case "commands": fallthrough
+		case "commands":
+			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
+	}
+	
+	// now handle the commands that require a linked server
+	if !isServerLinked {
+		_, _ = s.ChannelMessageSend(m.ChannelID, "Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+	
+	switch commandMatches[1] {
+		case "unlink":
+			unlinkChannelFromServer(server)
+			_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
+			
+		case "rcon":
+			command := strings.Join(fields[1:], " ")
+			cmd := Command{
+				Type: "rcon",
+				User: m.Author.Username,
+				Content: command,
+			}
+			
+			Servers[server].Outbound <- cmd
+		
 		default:
 			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
 	}
@@ -131,14 +150,11 @@ func getServerLinkedToChannel(channelID string) (server string, success bool) {
 	return
 }
 
-
-func unlinkChannelByChannelID(ID string) (success bool) {
-	for server, channel := range Servers {
-		if channel.ChannelID == ID {
-			log.Println("Uninked channelID " + channel.ChannelID + " from server " + server)
-			delete(Servers, server)
-			return true
-		}
+func unlinkChannelFromServer(server string) (success bool) {
+	if _, ok := Servers[server]; ok {
+		log.Println("Uninked channelID " + Servers[server].ChannelID + " from server " + server)
+		delete(Servers, server)
+		success = true
 	}
 	return
 }
@@ -157,11 +173,7 @@ func getHelpMessage() string {
 
 
 func forwardMessageToDiscord(server string, username string, message string) {
-	channel, ok := Servers[server]
-	if !ok {
-		log.Println("Recieved message but could not get a channel for", server, ". Link a channel first with '!link <servername>'")
-		return
+	if channel, ok := Servers[server]; ok {
+		_, _ = session.ChannelMessageSend(channel.ChannelID, "**" + username + ":** " + message)
 	}
-
-	_, _ = session.ChannelMessageSend(channel.ChannelID, "**" + username + ":** " + message)
 }
