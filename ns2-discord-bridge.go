@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
     "flag"
     "sync"
+    "errors"
     "time"
 	"github.com/naoina/toml"
 )
@@ -33,6 +34,7 @@ var configFile string
 var Servers map[string]*Server
 
 type Server struct {
+    Name string
     ChannelID string
     Admins []string
     Outbound chan Command
@@ -48,39 +50,42 @@ type Command struct {
 }
 
 
-func CreateServer(serverName string) *Server {
-    server := &Server{
-        Admins : make([]string, 0),
-        Outbound : make(chan Command),
+func GetServerByName(serverName string) (server *Server, ok bool) {
+    server, ok = Servers[serverName]
+    return
+}
+
+
+func LinkChannelIDToServer(channelID string, server *Server) error {
+    if linkedServer, ok := GetServerLinkedToChannel(channelID); ok {
+        if linkedServer == server {
+            return errors.New("This channel was already linked to '" + linkedServer.Name + "'")
+        } else {
+            return errors.New("This channel is already linked to '" + linkedServer.Name +"'. Use !unlink first.")
+        }
     }
-    Servers[serverName] = server
-    return server
-}
-
-
-func LinkChannelIDToServer(channelID string, serverName string) {
-	server := CreateServer(serverName)
     server.ChannelID = channelID
-	log.Println("Linked channelID " + channelID + " to server " + serverName)
+    log.Println("Linked channelID " + channelID + " to server " + server.Name)
+    return nil
 }
 
 
-func GetServerLinkedToChannel(channelID string) (server string, success bool) {
-	for k, v := range Servers {
-		if v.ChannelID == channelID {
-			return k, true
-		}
-	}
-	return
+func GetServerLinkedToChannel(channelID string) (server *Server, success bool) {
+    for _, v := range Servers {
+        if v.ChannelID == channelID {
+            return v, true
+        }
+    }
+    return
 }
 
 
-func UnlinkChannelFromServer(server string) (success bool) {
-	if _, ok := Servers[server]; ok {
-		log.Println("Uninked channelID " + Servers[server].ChannelID + " from server " + server)
-		delete(Servers, server)
+func UnlinkChannelFromServer(server *Server) (success bool) {
+	if server != nil {
+		log.Println("Uninked channelID " + server.ChannelID + " from server " + server.Name)
+        server.ChannelID = ""
 		success = true
-	}
+    }
 	return
 }
 
@@ -114,11 +119,16 @@ func main() {
     
     Servers = make(map[string]*Server)
     for serverName, v := range Config.Servers {
-        server := CreateServer(serverName)
+        server := &Server{
+            Name : serverName,
+            Admins : make([]string, 0),
+            Outbound : make(chan Command),
+        }
         server.ChannelID = v.ChannelID
         for _, admin := range v.Admins {
-            Servers[serverName].Admins = append(Servers[serverName].Admins, admin)
+            server.Admins = append(server.Admins, admin)
         }
+        Servers[serverName] = server
         log.Println(Servers[serverName])
         log.Println("Linked server", serverName, "to channel", v.ChannelID)
     }

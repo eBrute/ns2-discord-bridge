@@ -45,10 +45,18 @@ func startDiscordBot() {
 }
 
 
+func getResponseFunction(s *discordgo.Session, m *discordgo.MessageCreate) func(string) {
+    return func(text string) {
+        _, _ = s.ChannelMessageSend(m.ChannelID, text)
+    }
+}
+
+
 func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	// Ignore all messages created by the bot itself
-	if m.Author.ID == botID {
+	author := m.Author
+	if author.ID == botID {
 		return
 	}
 	
@@ -64,60 +72,64 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		
 		cmd := Command{
 			Type: "chat",
-			User: m.Author.Username,
+			User: author.Username,
 			Content: m.Content,
 		}
-		Servers[server].Outbound <- cmd
+		server.Outbound <- cmd
 		// TODO either make sure server is listening or have a timer clear the channel after some time
 		return
 	}
 
 	// message was a discord command
 	fields := strings.Fields(m.Content)
-	server, isServerLinked := GetServerLinkedToChannel(m.ChannelID)
+	respond := getResponseFunction(s, m)
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
 		case "link":
 			if len(fields) < 2 {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "You need to specify a server")
+				respond("You need to specify a server")
 				return
 			}
-			if isServerLinked {
-				 if server == fields[1] {
-					 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel was already linked to '" + server + "'")
-				 } else {
-					 _, _ = s.ChannelMessageSend(m.ChannelID, "This channel is already linked to '" + server +"'. Use !unlink first.")
-				 }
-				 return
+			server, ok := GetServerByName(fields[1])
+			if !ok {
+				respond("The server '" + fields[1] + "' is not configured")
+				return
 			}
-			LinkChannelIDToServer(m.ChannelID, fields[1])
-			_, _ = s.ChannelMessageSend(m.ChannelID, "This channel is now linked to '" + fields[1] + "'")
+			if err := LinkChannelIDToServer(m.ChannelID, server); err != nil {
+				respond(err.Error())
+			} else {
+				respond("This channel is now linked to '" + server.Name + "'")
+			}
+			return
 
 		case "list":
 			listAll := len(fields) > 1  && fields[1] == "all"
-			for server, channel := range Servers {
-				id := channel.ChannelID
+			for _, server := range Servers {
+				id := server.ChannelID
 				if listAll || id == m.ChannelID {
-					_, _ = s.ChannelMessageSend(m.ChannelID, "Server '" + server + "' is linked to channel <#" + id + "> (" + id + ")")
+					respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
 				}
 			}
+			return
 			
 		case "help": fallthrough
 		case "commands":
-			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
+			respond(getHelpMessage())
+			return
 	}
 	
 	// now handle the commands that require a linked server
+	server, isServerLinked := GetServerLinkedToChannel(m.ChannelID)
 	if !isServerLinked {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Channel is not linked to any server. Use !link <servername> first.")
+		respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
 	}
 	
 	switch commandMatches[1] {
 		case "unlink":
 			UnlinkChannelFromServer(server)
-			_, _ = s.ChannelMessageSend(m.ChannelID, "Unlinked this channel")
+			respond("Unlinked this channel")
 			
 		case "rcon":
 			command := strings.Join(fields[1:], " ")
@@ -126,11 +138,10 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				User: m.Author.Username,
 				Content: command,
 			}
-			
-			Servers[server].Outbound <- cmd
+			server.Outbound <- cmd
 		
 		default:
-			_, _ = s.ChannelMessageSend(m.ChannelID, getHelpMessage())
+			respond(getHelpMessage())
 	}
 }
 
@@ -144,6 +155,17 @@ func getHelpMessage() string {
 !list                            - prints the server linked to this channel
 !list all                        - prints all linked servers
 ` + "```"
+}
+
+func IsAdminOfServer(user *discordgo.User, server *Server) bool {
+	userHandle := user.Username + "#" + user.Discriminator
+	userID := user.ID
+	for _, v := range server.Admins {
+		if v == userHandle || v == userID {
+			return true
+		}
+	}
+	return false
 }
 
 
