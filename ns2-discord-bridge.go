@@ -9,6 +9,7 @@ import (
     "errors"
     "time"
 	"github.com/naoina/toml"
+    "github.com/bwmarrin/discordgo"
 )
 
 
@@ -77,6 +78,17 @@ func GetServerLinkedToChannel(channelID string) (server *Server, success bool) {
         }
     }
     return
+}
+
+func GetIsAdminForServer(user *discordgo.User, server *Server) bool {
+    userName := user.Username + "#" + user.Discriminator
+    userID := user.ID
+    for _, admin := range server.Admins {
+        if admin == userID || admin == userName {
+            return true
+        }
+    }
+    return false
 }
 
 

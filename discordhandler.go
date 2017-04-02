@@ -96,6 +96,10 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				respond("The server '" + fields[1] + "' is not configured")
 				return
 			}
+			if !GetIsAdminForServer(author, server) {
+				respond("You are not registered as an admin for server '" + server.Name + "'")
+				return
+			}
 			if err := LinkChannelIDToServer(m.ChannelID, server); err != nil {
 				respond(err.Error())
 			} else {
@@ -128,10 +132,18 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	switch commandMatches[1] {
 		case "unlink":
+			if !GetIsAdminForServer(author, server) {
+				respond("You are not registered as an admin for server '" + server.Name + "'")
+				return
+			}
 			UnlinkChannelFromServer(server)
 			respond("Unlinked this channel")
 			
 		case "rcon":
+			if !GetIsAdminForServer(author, server) {
+				respond("You are not registered as an admin for server '" + server.Name + "'")
+				return
+			}
 			command := strings.Join(fields[1:], " ")
 			cmd := Command{
 				Type: "rcon",
