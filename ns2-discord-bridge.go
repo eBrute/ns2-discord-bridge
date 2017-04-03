@@ -40,7 +40,8 @@ type Server struct {
     Outbound chan Command
     Mux sync.Mutex
     ActiveThread int
-    Timeout time.Duration
+    TimeoutSet chan int
+    TimeoutReset chan int
 }
 
 type Command struct {
@@ -104,6 +105,45 @@ func UnlinkChannelFromServer(server *Server) (success bool) {
 }
 
 
+func clearOutboundChannel(outbound chan Command) {
+    for {
+        select {
+            case <- outbound:
+            default: return
+        }
+    }
+}
+
+
+func clearOutboundChannelOnInactivity(server *Server) {
+    var timeout int = -1
+    for {
+        select {
+        case <- server.TimeoutReset:
+            // log.Println("Timer stopped, server retrieved message")
+            timeout = -1
+            // NOTE here we assume that the whole channel was cleared, although we only now that one value was read
+        case timeout = <- server.TimeoutSet:
+            timeout = timeout * 100
+            // log.Println("Timer set to", timeout/100)
+        default:
+        }
+        if timeout == 0 {
+            // log.Println("Timeout reached")
+            clearOutboundChannel(server.Outbound)
+            timeout = -1
+        }
+        if timeout > 0 {
+            timeout--
+            // if timeout % 100 == 0 {
+            //     log.Println("Time left for server to retrieve message: ", timeout/100)
+            // }
+        }
+        time.Sleep(10 * time.Millisecond)
+    }
+}
+
+
 // Parse command line arguments
 func init() {
 	flag.StringVar(&configFile, "c", "config.toml", "Configuration File")
@@ -137,16 +177,19 @@ func main() {
             Name : serverName,
             Admins : make([]string, 0),
             Outbound : make(chan Command),
+            TimeoutSet : make(chan int),
+            TimeoutReset : make(chan int),
         }
         server.ChannelID = v.ChannelID
         for _, admin := range v.Admins {
             server.Admins = append(server.Admins, admin)
         }
+        go clearOutboundChannelOnInactivity(server)
         Servers[serverName] = server
         log.Println(Servers[serverName])
         log.Println("Linked server", serverName, "to channel", v.ChannelID)
     }
     
-	startDiscordBot()
-	startHTTPServer()
+	startDiscordBot() // non-blocking
+	startHTTPServer() // blocking
 }

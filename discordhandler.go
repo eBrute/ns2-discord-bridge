@@ -61,9 +61,8 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
-	
+
 	if len(commandMatches) == 0 { // this is a regular message
-		
 		server, ok := GetServerLinkedToChannel(m.ChannelID)
 		if !ok {
 			// this channel isnt linked to any server, so just do nothing
@@ -75,8 +74,8 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			User: author.Username,
 			Content: m.Content,
 		}
+		server.TimeoutSet <- 60 // sec
 		server.Outbound <- cmd
-		// TODO either make sure server is listening or have a timer clear the channel after some time
 		return
 	}
 
@@ -150,6 +149,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				User: m.Author.Username,
 				Content: command,
 			}
+			server.TimeoutSet <- 60 // sec
 			server.Outbound <- cmd
 		
 		default:

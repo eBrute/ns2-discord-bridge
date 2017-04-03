@@ -60,6 +60,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	for {
 		select {
 		case cmd := <-server.Outbound :
+			server.TimeoutReset <- 0
 			js, err := json.Marshal(cmd)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
