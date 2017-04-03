@@ -169,6 +169,7 @@ func getHelpMessage() string {
 ` + "```"
 }
 
+
 func IsAdminOfServer(user *discordgo.User, server *Server) bool {
 	userHandle := user.Username + "#" + user.Discriminator
 	userID := user.ID
@@ -181,7 +182,7 @@ func IsAdminOfServer(user *discordgo.User, server *Server) bool {
 }
 
 
-func forwardMessageToDiscord(serverName string, username string, message string) {
+func forwardChatMessageToDiscord(serverName string, username string, message string) {
 	if server, ok := Servers[serverName]; ok {
 		_, _ = session.ChannelMessageSend(server.ChannelID, "**" + username + ":** " + message)
 	}

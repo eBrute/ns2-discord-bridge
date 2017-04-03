@@ -46,7 +46,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		case "chat" :
 			player := request.PostFormValue("player")
 			message := request.PostFormValue("message")
-			forwardMessageToDiscord(serverName, player, message)
+			forwardChatMessageToDiscord(serverName, player, message)
 		case "status" :
 			message := request.PostFormValue("message")
 			forwardGameStatusToDiscord(serverName, message)
