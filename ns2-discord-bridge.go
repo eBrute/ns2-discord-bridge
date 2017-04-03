@@ -26,7 +26,6 @@ type Configuration struct {
 type ServerConfig struct {
     ChannelID string
     Admins []string
-    Password string
 }
 
 var Config Configuration
@@ -83,6 +82,9 @@ func GetServerLinkedToChannel(channelID string) (server *Server, success bool) {
 func GetIsAdminForServer(user *discordgo.User, server *Server) bool {
     userName := user.Username + "#" + user.Discriminator
     userID := user.ID
+    if len(server.Admins) == 0 {
+        return true
+    }
     for _, admin := range server.Admins {
         if admin == userID || admin == userName {
             return true
