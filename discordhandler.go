@@ -181,8 +181,22 @@ func IsAdminOfServer(user *discordgo.User, server *Server) bool {
 }
 
 
-func forwardMessageToDiscord(server string, username string, message string) {
-	if channel, ok := Servers[server]; ok {
-		_, _ = session.ChannelMessageSend(channel.ChannelID, "**" + username + ":** " + message)
+func forwardMessageToDiscord(serverName string, username string, message string) {
+	if server, ok := Servers[serverName]; ok {
+		_, _ = session.ChannelMessageSend(server.ChannelID, "**" + username + ":** " + message)
+	}
+}
+
+
+func forwardGameStatusToDiscord(serverName string, message string) {
+	if server, ok := Servers[serverName]; ok {
+		_, _ = session.ChannelMessageSend(server.ChannelID, message)
+	}
+}
+
+
+func forwardAdminPrintToDiscord(serverName string, message string) {
+	if server, ok := Servers[serverName]; ok {
+		_, _ = session.ChannelMessageSend(server.ChannelID, message)
 	}
 }

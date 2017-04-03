@@ -47,6 +47,12 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			player := request.PostFormValue("player")
 			message := request.PostFormValue("message")
 			forwardMessageToDiscord(serverName, player, message)
+		case "status" :
+			message := request.PostFormValue("message")
+			forwardGameStatusToDiscord(serverName, message)
+		case "adminprint" :
+			message := request.PostFormValue("message")
+			forwardAdminPrintToDiscord(serverName, message)
 		default: return
 	}
 	
