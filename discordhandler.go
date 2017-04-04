@@ -11,6 +11,8 @@ var (
 	botID string
 	session *discordgo.Session
 	commandPattern *regexp.Regexp
+	mentionPattern *regexp.Regexp
+	channelPattern *regexp.Regexp
 )
 
 
@@ -31,6 +33,8 @@ func startDiscordBot() {
 	botID = user.ID
 
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
+	mentionPattern, _ = regexp.Compile(`<@\d+>`)
+	channelPattern, _ = regexp.Compile(`<#\d+>`)
 
 	session.AddHandler(chatEventHandler)
 
@@ -72,7 +76,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		cmd := Command{
 			Type: "chat",
 			User: author.Username,
-			Content: m.Content,
+			Content: formatDiscordMessage(m),
 		}
 		server.TimeoutSet <- 60 // sec
 		server.Outbound <- cmd
@@ -179,6 +183,23 @@ func IsAdminOfServer(user *discordgo.User, server *Server) bool {
 		}
 	}
 	return false
+}
+
+
+func mentionTranslator(mentions []*discordgo.User) (func(string) string) {
+	return func(match string) string {
+		for _, mention := range mentions {
+			if "<@" + mention.ID + ">" == match {
+				return "@" + mention.Username
+			}
+		}
+		return match
+	}
+}
+
+
+func formatDiscordMessage(m *discordgo.MessageCreate) string {
+	return mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
 }
 
 
