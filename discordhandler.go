@@ -203,7 +203,6 @@ func mentionTranslator(mentions []*discordgo.User) (func(string) string) {
 func channelTranslator(mentions []*discordgo.User) (func(string) string) {
 	return func(match string) string {
 		id := strings.Trim(match, "\\<#>")
-		log.Println("found id:", id)
 		if channel, err := session.State.Channel(id); err == nil {
 			return "#" + channel.Name
 		} else {
