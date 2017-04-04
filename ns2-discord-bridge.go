@@ -26,6 +26,7 @@ type Configuration struct {
 type ServerConfig struct {
     ChannelID string
     Admins []string
+    Prefix string
 }
 
 var Config Configuration
@@ -37,6 +38,7 @@ type Server struct {
     Name string
     ChannelID string
     Admins []string
+    Prefix string
     Outbound chan Command
     Mux sync.Mutex
     ActiveThread int
@@ -181,6 +183,7 @@ func main() {
             TimeoutReset : make(chan int),
         }
         server.ChannelID = v.ChannelID
+        server.Prefix = v.Prefix
         for _, admin := range v.Admins {
             server.Admins = append(server.Admins, admin)
         }
