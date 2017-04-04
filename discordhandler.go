@@ -28,8 +28,8 @@ func startDiscordBot() {
 	if err != nil {
 		log.Println("error obtaining account details,", err)
 	}
-
 	botID = user.ID
+
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
 
 	session.AddHandler(chatEventHandler)
@@ -184,20 +184,20 @@ func IsAdminOfServer(user *discordgo.User, server *Server) bool {
 
 func forwardChatMessageToDiscord(serverName string, username string, message string) {
 	if server, ok := Servers[serverName]; ok {
-		_, _ = session.ChannelMessageSend(server.ChannelID, "**" + username + ":** " + message)
+		_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + "**" + username + ":** " + message)
 	}
 }
 
 
 func forwardGameStatusToDiscord(serverName string, message string) {
 	if server, ok := Servers[serverName]; ok {
-		_, _ = session.ChannelMessageSend(server.ChannelID, message)
+		_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + message)
 	}
 }
 
 
 func forwardAdminPrintToDiscord(serverName string, message string) {
 	if server, ok := Servers[serverName]; ok {
-		_, _ = session.ChannelMessageSend(server.ChannelID, message)
+		_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + message)
 	}
 }
