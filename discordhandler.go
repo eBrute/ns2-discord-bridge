@@ -33,8 +33,8 @@ func startDiscordBot() {
 	botID = user.ID
 
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
-	mentionPattern, _ = regexp.Compile(`<@\d+>`)
-	channelPattern, _ = regexp.Compile(`<#\d+>`)
+	mentionPattern, _ = regexp.Compile(`[\\]?<@\d+>`)
+	channelPattern, _ = regexp.Compile(`[\\]?<#\d+>`)
 
 	session.AddHandler(chatEventHandler)
 
@@ -65,7 +65,8 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
-
+	
+	
 	if len(commandMatches) == 0 { // this is a regular message
 		server, ok := GetServerLinkedToChannel(m.ChannelID)
 		if !ok {
@@ -188,8 +189,9 @@ func IsAdminOfServer(user *discordgo.User, server *Server) bool {
 
 func mentionTranslator(mentions []*discordgo.User) (func(string) string) {
 	return func(match string) string {
+		id := strings.Trim(match, "\\<@>")
 		for _, mention := range mentions {
-			if "<@" + mention.ID + ">" == match {
+			if mention.ID == id {
 				return "@" + mention.Username
 			}
 		}
@@ -198,8 +200,24 @@ func mentionTranslator(mentions []*discordgo.User) (func(string) string) {
 }
 
 
+func channelTranslator(mentions []*discordgo.User) (func(string) string) {
+	return func(match string) string {
+		id := strings.Trim(match, "\\<#>")
+		log.Println("found id:", id)
+		if channel, err := session.State.Channel(id); err == nil {
+			return "#" + channel.Name
+		} else {
+			return "#deleted-channel"
+		}
+		return match
+	}
+}
+
+
 func formatDiscordMessage(m *discordgo.MessageCreate) string {
-	return mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
+	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
+	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions) )
+	return message
 }
 
 
