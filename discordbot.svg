@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   width="256"
+   height="256"
+   viewBox="0 0 256 256"
+   sodipodi:docname="discordbot.svg"
+   inkscape:export-filename="/home/brute/Downloads/discordbot.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     pagecolor="#36393e"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1280"
+     inkscape:window-height="963"
+     id="namedview4"
+     showgrid="false"
+     inkscape:zoom="1.9348081"
+     inkscape:cx="54.614087"
+     inkscape:cy="133.52601"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <rect
+     style="opacity:1;fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect4138"
+     width="191.71303"
+     height="163.31113"
+     x="31.536333"
+     y="49.203865"
+     rx="68.046288"
+     ry="48.211369" />
+  <rect
+     style="opacity:1;fill:#282b30;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect4140"
+     width="146.74332"
+     height="92.700775"
+     x="54.021202"
+     y="73.266594"
+     rx="42.405575"
+     ry="32.938362" />
+  <rect
+     ry="27.18996"
+     rx="42.405575"
+     y="89.444725"
+     x="54.021198"
+     height="76.522636"
+     width="146.74332"
+     id="rect4156"
+     style="opacity:1;fill:#35383c;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <circle
+     style="opacity:1;fill:#43b581;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path4142"
+     cx="85.239716"
+     cy="122.57552"
+     r="11.83414" />
+  <rect
+     style="opacity:1;fill:#dbdde1;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect4146"
+     width="58.381752"
+     height="26.824049"
+     x="98.615112"
+     y="42.892296"
+     rx="11.833924"
+     ry="5.3251462" />
+  <circle
+     r="11.83414"
+     cy="122.57552"
+     cx="168.82687"
+     id="circle4144"
+     style="opacity:1;fill:#43b581;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     ry="28.892817"
+     rx="12.830935"
+     y="95.889618"
+     x="16.456146"
+     height="57.785633"
+     width="31.046282"
+     id="rect4150"
+     style="opacity:1;fill:#dbdde1;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     style="opacity:1;fill:#dbdde1;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect4152"
+     width="31.046282"
+     height="57.785633"
+     x="208.49757"
+     y="95.889618"
+     rx="12.830935"
+     ry="28.892817" />
+  <rect
+     style="opacity:1;fill:#dbdde1;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect4154"
+     width="60.807468"
+     height="34.029869"
+     x="97.40226"
+     y="179.07784"
+     rx="3.5608511"
+     ry="2.9563363" />
+</svg>
