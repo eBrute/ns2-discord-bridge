@@ -16,6 +16,7 @@ import (
 type Configuration struct {
     Discord struct {
         Token string
+        Messagestyle string
     }
     Httpserver struct {
         Address string

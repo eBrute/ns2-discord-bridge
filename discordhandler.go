@@ -33,7 +33,7 @@ func startDiscordBot() {
 	botID = user.ID
 
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
-	mentionPattern, _ = regexp.Compile(`[\\]?<@\d+>`)
+	mentionPattern, _ = regexp.Compile(`[\\]?<@[!]?\d+>`)
 	channelPattern, _ = regexp.Compile(`[\\]?<#\d+>`)
 
 	session.AddHandler(chatEventHandler)
@@ -44,7 +44,68 @@ func startDiscordBot() {
 		log.Println("error opening connection,", err)
 		return
 	}
-
+	
+	// footer := &discordgo.MessageEmbedFooter{
+	// 	Text: "Brute: Long long long long long message",
+	// 	IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+	// }
+	// image := &discordgo.MessageEmbedImage{
+	// 	URL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+	// 	Width: 200,
+	// 	Height: 200,
+	// }
+	// thumb := &discordgo.MessageEmbedThumbnail{
+	// 	URL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+	// 	Width: 564,
+	// 	Height: 564,
+	// }
+	// provider := &discordgo.MessageEmbedProvider{
+	// 	URL: "https://google.com",
+	// 	Name: "providername",
+	// }
+    // author := &discordgo.MessageEmbedAuthor{
+	// 	URL: "https://userurl.com",
+	// 	Name: "Brute",
+	// 	IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+	// }
+    // fields := []*discordgo.MessageEmbedField{{
+	//     Name: "embedfieldname1",
+	//     Value: "embedfieldvalue1",
+	//     Inline: true,
+	// },
+	// {
+	// 	Name: "embedfieldname2",
+	// 	Value: "embedfieldvalue2",
+	// 	Inline: true,
+	// },
+	// {
+	// 	Name: "embedfieldname3",
+	// 	Value: "embedfieldvalue3",
+	// 	Inline: false,
+	// },
+	// {
+	// 	Name: "embedfieldname4",
+	// 	Value: "embedfieldvalue4",
+	// 	Inline: false,
+	// }}
+	
+	// embed := &discordgo.MessageEmbed{
+	// 	// URL: "https://google.de",
+	// 	// Type: "Type",
+	// 	// Title: "Title",
+	// 	Description: "Long long long long long message",
+	// 	// Timestamp: "2017-01-01T23:59:59",
+	// 	// Color: 255*256*256 + 128*256 + 64,
+	// 	// Footer: footer,
+	// 	// Image: image,
+	// 	// Thumbnail: thumb,
+	// 	// Provider: provider,
+	// 	Author: author,
+	// 	// Fields: fields,
+	// }
+		
+	// _, _ = session.ChannelMessageSendEmbed("242940165516034049", embed)
+	
 	log.Println("Discord Bot is now running.")
 }
 
@@ -100,7 +161,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				respond("The server '" + fields[1] + "' is not configured")
 				return
 			}
-			if !GetIsAdminForServer(author, server) {
+			if !IsAdminForServer(author, server) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
@@ -136,7 +197,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	switch commandMatches[1] {
 		case "unlink":
-			if !GetIsAdminForServer(author, server) {
+			if !IsAdminForServer(author, server) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
@@ -144,7 +205,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			respond("Unlinked this channel")
 			
 		case "rcon":
-			if !GetIsAdminForServer(author, server) {
+			if !IsAdminForServer(author, server) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
@@ -175,21 +236,9 @@ func getHelpMessage() string {
 }
 
 
-func IsAdminOfServer(user *discordgo.User, server *Server) bool {
-	userHandle := user.Username + "#" + user.Discriminator
-	userID := user.ID
-	for _, v := range server.Admins {
-		if v == userHandle || v == userID {
-			return true
-		}
-	}
-	return false
-}
-
-
 func mentionTranslator(mentions []*discordgo.User) (func(string) string) {
 	return func(match string) string {
-		id := strings.Trim(match, "\\<@>")
+		id := strings.Trim(match, "\\<@!>")
 		for _, mention := range mentions {
 			if mention.ID == id {
 				return "@" + mention.Username
@@ -222,7 +271,34 @@ func formatDiscordMessage(m *discordgo.MessageCreate) string {
 
 func forwardChatMessageToDiscord(serverName string, username string, message string) {
 	if server, ok := Servers[serverName]; ok {
-		_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + "**" + username + ":** " + message)
+		
+		switch Config.Discord.Messagestyle {
+		case "multiline":
+			embed := &discordgo.MessageEmbed{
+				URL: "https://google.de",
+				Description: message,
+				// Color: 255*256*256 + 128*256 + 64,
+				Author: &discordgo.MessageEmbedAuthor{
+					URL: "https://userurl.com",
+					Name: username,
+					IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+				},
+			}
+			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+		case "inline":
+			embed := &discordgo.MessageEmbed{
+				// Color: 255*256*256 + 128*256 + 64,
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: username +": " + message,
+					IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+				},
+			}
+			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+		
+		default: fallthrough
+		case "text":
+			_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + "**" + username + ":** " + message)
+		}
 	}
 }
 
