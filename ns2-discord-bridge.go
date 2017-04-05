@@ -18,6 +18,10 @@ type Configuration struct {
         Token string
         MessageStyle string
     }
+    Messagestyles struct {
+        Rich MessageStyleRichConfig
+        Text MessageStyleTextConfig
+    }
     Httpserver struct {
         Address string
     }
@@ -27,14 +31,32 @@ type Configuration struct {
     Servers map[string]ServerConfig
 }
 
+type MessageStyleRichConfig struct {
+    PlayerJoinColor []int
+    PlayerLeaveColor []int
+    StatusColor []int
+    ChatMessageColor []int
+    ReadyRoomChatMessageColor []int
+    MarineChatMessageColor []int
+    AlienChatMessageColor []int
+    SpectatorChatMessageColor []int
+}
+
+type MessageStyleTextConfig struct {
+    ChatMessageFormat string
+}
+
 type ServerConfig struct {
     ChannelID string
     Admins []string
-    Prefix string
+    ChatMessagePrefix string
+    StatusMessagePrefix string
+    ServerIconUrl string
 }
 
 var Config Configuration
 var configFile string
+var DefaultMessageColor int = 75*256*256 + 78*256 + 82
 
 var Servers map[string]*Server
 
@@ -86,6 +108,17 @@ func GetServerLinkedToChannel(channelID string) (server *Server, success bool) {
     return
 }
 
+
+func UnlinkChannelFromServer(server *Server) (success bool) {
+    if server != nil {
+        log.Println("Uninked channelID " + server.ChannelID + " from server " + server.Name)
+        server.ChannelID = ""
+        success = true
+    }
+    return
+}
+
+
 func IsAdminForServer(user *discordgo.User, server *Server) bool {
     userName := user.Username + "#" + user.Discriminator
     userID := user.ID
@@ -101,13 +134,35 @@ func IsAdminForServer(user *discordgo.User, server *Server) bool {
 }
 
 
-func UnlinkChannelFromServer(server *Server) (success bool) {
-	if server != nil {
-		log.Println("Uninked channelID " + server.ChannelID + " from server " + server.Name)
-        server.ChannelID = ""
-		success = true
+func GetColorForMessage(messagetype string) int {
+    switch messagetype {
+        case "chat" :        return getColorFromConfig(Config.Messagestyles.Rich.ChatMessageColor)
+        case "playerjoin" :  return getColorFromConfig(Config.Messagestyles.Rich.PlayerJoinColor)
+        case "playerleave" : return getColorFromConfig(Config.Messagestyles.Rich.PlayerLeaveColor)
+        case "status" :      return getColorFromConfig(Config.Messagestyles.Rich.StatusColor)
+        case "adminprint" :  return getColorFromConfig(Config.Messagestyles.Rich.StatusColor)
+        default :            return DefaultMessageColor
     }
-	return
+}
+
+func GetTeamColorForChatMessage(teamNumber int) int {
+    println("getcolor", teamNumber)
+    switch teamNumber {
+        default: fallthrough
+        case 0 : return getColorFromConfig(Config.Messagestyles.Rich.ReadyRoomChatMessageColor)
+        case 1 : return getColorFromConfig(Config.Messagestyles.Rich.MarineChatMessageColor)
+        case 2 : return getColorFromConfig(Config.Messagestyles.Rich.AlienChatMessageColor)
+        case 3 : return getColorFromConfig(Config.Messagestyles.Rich.SpectatorChatMessageColor)
+    }
+}
+
+
+func getColorFromConfig(color []int) int {
+    if len(color) != 3 {
+        println("no color specified")
+        return DefaultMessageColor
+    }
+    return color[0]*256*256 + color[1]*256 + color[2]
 }
 
 
@@ -187,7 +242,6 @@ func main() {
             TimeoutReset : make(chan int),
         }
         server.ChannelID = v.ChannelID
-        server.Prefix = v.Prefix
         for _, admin := range v.Admins {
             server.Admins = append(server.Admins, admin)
         }

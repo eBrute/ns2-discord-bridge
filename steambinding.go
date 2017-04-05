@@ -67,6 +67,15 @@ func GetAvatarForSteamID3(steamID3 int32) string {
 }
 
 
+func GetSteamProfileLinkForSteamID3(steamID3 int32) string {
+    if steamID3 == 0 {
+        return ""
+    }
+	steamID := getSteamID(steamID3)
+	return "http://steamcommunity.com/profiles/" + strconv.FormatInt(steamID, 10)
+}
+
+
 func getSteamID(steamID3 int32) int64 {
     var steamBaseline int64 = 76561197960265728
     return steamBaseline + int64(steamID3)

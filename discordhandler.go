@@ -269,25 +269,27 @@ func formatDiscordMessage(m *discordgo.MessageCreate) string {
 }
 
 
-func forwardChatMessageToDiscord(serverName string, username string, steamID3 int32, message string) {
+func forwardChatMessageToDiscord(serverName string, username string, steamID3 int32, teamNumber int, message string) {
 	if server, ok := Servers[serverName]; ok {
 		
 		switch Config.Discord.MessageStyle {
+		default: fallthrough
 		case "multiline":
 			embed := &discordgo.MessageEmbed{
-				URL: "https://google.de",
 				Description: message,
-				// Color: 255*256*256 + 128*256 + 64,
+				Color: GetTeamColorForChatMessage(teamNumber),
 				Author: &discordgo.MessageEmbedAuthor{
-					URL: "https://userurl.com",
+					URL: GetSteamProfileLinkForSteamID3(steamID3),
 					Name: username,
 					IconURL: GetAvatarForSteamID3(steamID3),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
-		case "inline":
+		
+		case "inline": fallthrough
+		case "oneline":
 			embed := &discordgo.MessageEmbed{
-				// Color: 255*256*256 + 128*256 + 64,
+				Color: GetTeamColorForChatMessage(teamNumber),
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: username +": " + message,
 					IconURL: GetAvatarForSteamID3(steamID3),
@@ -295,23 +297,32 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID3 in
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 		
-		default: fallthrough
 		case "text":
-			_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + "**" + username + ":** " + message)
+			_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ChatMessagePrefix + "**" + username + ":** " + message)
 		}
 	}
 }
 
 
-func forwardGameStatusToDiscord(serverName string, message string) {
+func forwardGameStatusToDiscord(serverName string, cmdType string, message string) {
 	if server, ok := Servers[serverName]; ok {
-		_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + message)
-	}
-}
-
-
-func forwardAdminPrintToDiscord(serverName string, message string) {
-	if server, ok := Servers[serverName]; ok {
-		_, _ = session.ChannelMessageSend(server.ChannelID, server.Prefix + message)
+		
+		switch Config.Discord.MessageStyle {
+		default: fallthrough
+		case "multiline": fallthrough
+		case "inline": fallthrough
+		case "oneline":
+			embed := &discordgo.MessageEmbed{
+				Color: GetColorForMessage(cmdType),
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: message,
+					IconURL: Config.Servers[serverName].ServerIconUrl,
+				},
+			}
+			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+		
+		case "text":
+			_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].StatusMessagePrefix + message)
+		}
 	}
 }

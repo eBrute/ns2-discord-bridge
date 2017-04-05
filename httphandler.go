@@ -46,16 +46,16 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		case "init" : // nothing to do, just keep the connection
 		case "chat" :
 			player := request.PostFormValue("player")
-			steamidString := request.PostFormValue("steamid")
-			steamid, _ := strconv.ParseInt(steamidString, 10, 32)
+			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
+			teamNumber, _ := strconv.Atoi(request.PostFormValue("teamnumber"))
 			message := request.PostFormValue("message")
-			forwardChatMessageToDiscord(serverName, player, int32(steamid), message)
+			forwardChatMessageToDiscord(serverName, player, int32(steamid), teamNumber, message)
+		case "playerjoin" : fallthrough
+		case "playerleave" : fallthrough
 		case "status" :
-			message := request.PostFormValue("message")
-			forwardGameStatusToDiscord(serverName, message)
 		case "adminprint" :
 			message := request.PostFormValue("message")
-			forwardAdminPrintToDiscord(serverName, message)
+			forwardGameStatusToDiscord(serverName, cmdtype, message)
 		default: return
 	}
 	
