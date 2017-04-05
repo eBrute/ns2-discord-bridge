@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strconv"
 	"encoding/json"
 )
 
@@ -45,8 +46,10 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		case "init" : // nothing to do, just keep the connection
 		case "chat" :
 			player := request.PostFormValue("player")
+			steamidString := request.PostFormValue("steamid")
+			steamid, _ := strconv.ParseInt(steamidString, 10, 32)
 			message := request.PostFormValue("message")
-			forwardChatMessageToDiscord(serverName, player, message)
+			forwardChatMessageToDiscord(serverName, player, int32(steamid), message)
 		case "status" :
 			message := request.PostFormValue("message")
 			forwardGameStatusToDiscord(serverName, message)

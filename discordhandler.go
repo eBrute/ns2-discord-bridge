@@ -269,10 +269,10 @@ func formatDiscordMessage(m *discordgo.MessageCreate) string {
 }
 
 
-func forwardChatMessageToDiscord(serverName string, username string, message string) {
+func forwardChatMessageToDiscord(serverName string, username string, steamID3 int32, message string) {
 	if server, ok := Servers[serverName]; ok {
 		
-		switch Config.Discord.Messagestyle {
+		switch Config.Discord.MessageStyle {
 		case "multiline":
 			embed := &discordgo.MessageEmbed{
 				URL: "https://google.de",
@@ -281,7 +281,7 @@ func forwardChatMessageToDiscord(serverName string, username string, message str
 				Author: &discordgo.MessageEmbedAuthor{
 					URL: "https://userurl.com",
 					Name: username,
-					IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+					IconURL: GetAvatarForSteamID3(steamID3),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
@@ -290,7 +290,7 @@ func forwardChatMessageToDiscord(serverName string, username string, message str
 				// Color: 255*256*256 + 128*256 + 64,
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: username +": " + message,
-					IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
+					IconURL: GetAvatarForSteamID3(steamID3),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)

@@ -16,10 +16,13 @@ import (
 type Configuration struct {
     Discord struct {
         Token string
-        Messagestyle string
+        MessageStyle string
     }
     Httpserver struct {
         Address string
+    }
+    Steam struct {
+        WebApiKey string
     }
     Servers map[string]ServerConfig
 }
@@ -83,7 +86,7 @@ func GetServerLinkedToChannel(channelID string) (server *Server, success bool) {
     return
 }
 
-func GetIsAdminForServer(user *discordgo.User, server *Server) bool {
+func IsAdminForServer(user *discordgo.User, server *Server) bool {
     userName := user.Username + "#" + user.Discriminator
     userID := user.ID
     if len(server.Admins) == 0 {
@@ -190,8 +193,7 @@ func main() {
         }
         go clearOutboundChannelOnInactivity(server)
         Servers[serverName] = server
-        log.Println(Servers[serverName])
-        log.Println("Linked server", serverName, "to channel", v.ChannelID)
+        log.Println("Linked server '"+ serverName +"' to channel", v.ChannelID)
     }
     
 	startDiscordBot() // non-blocking
