@@ -196,6 +196,7 @@ func main() {
         log.Println("Linked server '"+ serverName +"' to channel", v.ChannelID)
     }
     
+    InitSteamBinding()
 	startDiscordBot() // non-blocking
 	startHTTPServer() // blocking
 }

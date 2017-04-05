@@ -34,12 +34,33 @@ type SteamPlayer struct {
 	Locstatecode string
 }
 
+
+type Avatar struct {
+    url string
+    lastUpdated time.Time
+}
+
 var myClient = &http.Client{Timeout: 10 * time.Second}
+var AvatarCache map[int32]*Avatar
+
+
+func InitSteamBinding() {
+    AvatarCache = make(map[int32]*Avatar)
+}
 
 func GetAvatarForSteamID3(steamID3 int32) string {
+    if avatar, ok := AvatarCache[steamID3]; ok {
+        if time.Now().Before(avatar.lastUpdated.Add(time.Duration(24) * time.Hour)) {
+            return avatar.url
+        }
+    }
     steamID := getSteamID(steamID3)
     steamProfile, err := GetSteamProfile(steamID)
     if err == nil {
+        AvatarCache[steamID3] = &Avatar{
+            url : steamProfile.Avatar,
+            lastUpdated : time.Now(),
+        }
         return steamProfile.Avatar
     }
     return ""
