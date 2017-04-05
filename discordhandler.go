@@ -34,7 +34,7 @@ func startDiscordBot() {
 
 	session.AddHandler(chatEventHandler)
 
-	// Open the websocket and begin listening.
+	// open the websocket and begin listening.
 	err = session.Open()
 	if err != nil {
 		log.Println("error opening connection,", err)
@@ -54,7 +54,7 @@ func getResponseFunction(s *discordgo.Session, m *discordgo.MessageCreate) func(
 
 func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
-	// Ignore all messages created by the bot itself
+	// ignore all messages created by the bot itself
 	author := m.Author
 	if author.ID == botID {
 		return
@@ -62,21 +62,14 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
-	
 	if len(commandMatches) == 0 { // this is a regular message
 		server, ok := getServerLinkedToChannel(m.ChannelID)
 		if !ok {
 			// this channel isnt linked to any server, so just do nothing
 			return
 		}
-		
-		cmd := Command{
-			Type: "chat",
-			User: author.Username,
-			Content: formatDiscordMessage(m),
-		}
 		server.TimeoutSet <- 60 // sec
-		server.Outbound <- cmd
+		server.Outbound <- createChatMessageCommand(author.Username, m)
 		return
 	}
 
@@ -145,13 +138,8 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				return
 			}
 			command := strings.Join(fields[1:], " ")
-			cmd := Command{
-				Type: "rcon",
-				User: m.Author.Username,
-				Content: command,
-			}
 			server.TimeoutSet <- 60 // sec
-			server.Outbound <- cmd
+			server.Outbound <- createRconCommand(m.Author.Username, command)
 		
 		default:
 			respond(getHelpMessage())

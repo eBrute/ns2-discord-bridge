@@ -31,6 +31,18 @@ func getTeamColorForChatMessage(teamNumber int) int {
 }
 
 
+func getTeamSpecifixPrefix(teamNumber int) string {
+    messageConfig := Config.Messagestyles.Text
+    switch teamNumber {
+        case 0: return messageConfig.ChatMessageReadyRoomPrefix
+        case 1: return messageConfig.ChatMessageMarinePrefix
+        case 2: return messageConfig.ChatMessageAlienPrefix
+        case 3: return messageConfig.ChatMessageSpectatorPrefix
+        default: return ""
+    }
+}
+
+
 func getColorFromConfig(color []int) int {
     if len(color) != 3 {
         return DefaultMessageColor
@@ -41,18 +53,11 @@ func getColorFromConfig(color []int) int {
 
 func buildTextChatMessage(serverName string, username string, teamNumber int, message string) string {
     serverConfig := Config.Servers[serverName]
-    messageConfig := Config.Messagestyles.Text
-    messageFormat := messageConfig.ChatMessageFormat
-    teamSpecificString := ""
-    switch teamNumber {
-        case 0: teamSpecificString = messageConfig.ChatMessageReadyRoomPrefix
-        case 1: teamSpecificString = messageConfig.ChatMessageMarinePrefix
-        case 2: teamSpecificString = messageConfig.ChatMessageAlienPrefix
-        case 3: teamSpecificString = messageConfig.ChatMessageSpectatorPrefix
-    }
+    messageFormat := Config.Messagestyles.Text.ChatMessageFormat
+    teamSpecificString := getTeamSpecifixPrefix(teamNumber)
     serverSpecificString := serverConfig.ServerChatMessagePrefix
-    r := strings.NewReplacer("%p", username, "%m", message, "%t", teamSpecificString, "%s", serverSpecificString)
-	formattedMessage := r.Replace(messageFormat)
+    replacer := strings.NewReplacer("%p", username, "%m", message, "%t", teamSpecificString, "%s", serverSpecificString)
+	formattedMessage := replacer.Replace(messageFormat)
     return formattedMessage
 }
 
@@ -62,12 +67,12 @@ func buildTextPlayerEvent(serverName, cmdType, username, message string) string 
     messageConfig := Config.Messagestyles.Text
     messageFormat := "%s %p %m"
     switch cmdType {
-    case "playerjoin": messageFormat = messageConfig.PlayerJoinFormat
-    case "playerleave": messageFormat = messageConfig.PlayerJoinFormat
+        case "playerjoin": messageFormat = messageConfig.PlayerJoinFormat
+        case "playerleave": messageFormat = messageConfig.PlayerJoinFormat
     }
     serverSpecificString := serverConfig.ServerChatMessagePrefix
-    r := strings.NewReplacer("%p", username, "%m", message, "%s", serverSpecificString)
-	formattedMessage := r.Replace(messageFormat)
+    replacer := strings.NewReplacer("%p", username, "%m", message, "%s", serverSpecificString)
+	formattedMessage := replacer.Replace(messageFormat)
     return formattedMessage
 }
 
@@ -111,26 +116,26 @@ func forwardPlayerEventToDiscord(serverName string, cmdType string, username str
 	if server, ok := Servers[serverName]; ok {
 		eventText := ""
 		switch cmdType {
-		case "playerjoin": eventText = " joined "
-		case "playerleave": eventText = " left "
+    		case "playerjoin": eventText = " joined "
+		          case "playerleave": eventText = " left "
 		}
 		
 		switch Config.Discord.MessageStyle {
-		default: fallthrough
-		case "multiline": fallthrough
-		case "inline": fallthrough
-		case "oneline":
-			embed := &discordgo.MessageEmbed{
-				Color: getColorForMessage(cmdType),
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: username + eventText + message,
-					IconURL: getAvatarForSteamID3(steamID3),
-				},
-			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
-		
-		case "text":
-			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, cmdType, username, message))
+    		default: fallthrough
+    		case "multiline": fallthrough
+    		case "inline": fallthrough
+    		case "oneline":
+    			embed := &discordgo.MessageEmbed{
+    				Color: getColorForMessage(cmdType),
+    				Footer: &discordgo.MessageEmbedFooter{
+    					Text: username + eventText + message,
+    					IconURL: getAvatarForSteamID3(steamID3),
+    				},
+    			}
+    			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+    		
+    		case "text":
+    			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, cmdType, username, message))
 		}
 	}
 }
@@ -140,21 +145,21 @@ func forwardGameStatusToDiscord(serverName string, cmdType string, message strin
 	if server, ok := Servers[serverName]; ok {
 		
 		switch Config.Discord.MessageStyle {
-		default: fallthrough
-		case "multiline": fallthrough
-		case "inline": fallthrough
-		case "oneline":
-			embed := &discordgo.MessageEmbed{
-				Color: getColorForMessage(cmdType),
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: message,
-					IconURL: Config.Servers[serverName].ServerIconUrl,
-				},
-			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
-		
-		case "text":
-			_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
+    		default: fallthrough
+    		case "multiline": fallthrough
+    		case "inline": fallthrough
+    		case "oneline":
+    			embed := &discordgo.MessageEmbed{
+    				Color: getColorForMessage(cmdType),
+    				Footer: &discordgo.MessageEmbedFooter{
+    					Text: message,
+    					IconURL: Config.Servers[serverName].ServerIconUrl,
+    				},
+    			}
+    			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+    		
+    		case "text":
+    			_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
 		}
 	}
 }

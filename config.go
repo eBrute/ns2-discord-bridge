@@ -7,7 +7,6 @@ import (
 	"github.com/naoina/toml"
 )
 
-
 type Configuration struct {
     Discord struct {
         Token string
@@ -69,11 +68,13 @@ func loadConfig(configFile string) {
         panic(err)
     }
     defer f.Close()
+    
     log.Println("Reading config file", configFile)
     buf, err := ioutil.ReadAll(f)
     if err != nil {
         panic(err)
     }
+    
     if err := toml.Unmarshal(buf, &Config); err != nil {
         panic(err)
     }
@@ -83,7 +84,7 @@ func loadConfig(configFile string) {
         server := &Server{
             Name : serverName,
             Admins : make([]string, 0),
-            Outbound : make(chan Command),
+            Outbound : make(chan *Command),
             TimeoutSet : make(chan int),
             TimeoutReset : make(chan int),
         }
@@ -96,4 +97,3 @@ func loadConfig(configFile string) {
         log.Println("Linked server '"+ serverName +"' to channel", v.ChannelID)
     }
 }
-

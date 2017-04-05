@@ -17,17 +17,11 @@ type Server struct {
     ChannelID string
     Admins []string
     Prefix string
-    Outbound chan Command
+    Outbound chan *Command
     Mux sync.Mutex
     ActiveThread int
     TimeoutSet chan int
     TimeoutReset chan int
-}
-
-type Command struct {
-    Type    string `json:"type"`
-    User    string `json:"user"`
-    Content string `json:"content"`
 }
 
 
@@ -86,7 +80,7 @@ func isAdminForServer(user *discordgo.User, server *Server) bool {
 }
 
 
-func clearOutboundChannel(outbound chan Command) {
+func clearOutboundChannel(outbound chan *Command) {
     for {
         select {
             case <- outbound:

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 )
 
+
 func startHTTPServer() {
 	http.HandleFunc("/discordbridge", httpHandler)
 
@@ -38,7 +39,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	// all other threads will stop themselves
 	server.Mux.Lock()
 	server.ActiveThread++
-	ThisThreadNummer := server.ActiveThread
+	thisThreadNummer := server.ActiveThread
 	server.Mux.Unlock()
 	
 	// handle the incoming request
@@ -56,7 +57,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			message := request.PostFormValue("message")
 			forwardPlayerEventToDiscord(serverName, cmdtype, player, int32(steamid), message)
-		case "status" :
+		case "status" : fallthrough
 		case "adminprint" :
 			message := request.PostFormValue("message")
 			forwardGameStatusToDiscord(serverName, cmdtype, message)
@@ -78,7 +79,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			
 		default :
 			time.Sleep(time.Duration(100) * time.Millisecond)
-			if ThisThreadNummer != server.ActiveThread {
+			if thisThreadNummer != server.ActiveThread {
 				return
 			}
 		}

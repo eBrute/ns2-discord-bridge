@@ -11,6 +11,12 @@ var (
 	channelPattern *regexp.Regexp
 )
 
+type Command struct {
+    Type    string `json:"type"`
+    User    string `json:"user"`
+    Content string `json:"content"`
+}
+
 
 func initGameMessages() {
 	mentionPattern, _ = regexp.Compile(`[\\]?<@[!]?\d+>`)
@@ -39,13 +45,31 @@ func channelTranslator(mentions []*discordgo.User) (func(string) string) {
 		} else {
 			return "#deleted-channel"
 		}
-		return match
 	}
 }
 
 
+// formats a discord message so it looks good in-game
 func formatDiscordMessage(m *discordgo.MessageCreate) string {
 	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
 	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions) )
 	return message
+}
+
+
+func createChatMessageCommand(username string, m *discordgo.MessageCreate) *Command {
+	return &Command{
+		Type: "chat",
+		User: username,
+		Content: formatDiscordMessage(m),
+	}
+}
+
+
+func createRconCommand(username string, command string) *Command {
+	return &Command{
+		Type: "rcon",
+		User: username,
+		Content: command,
+	}
 }
