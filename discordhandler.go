@@ -11,8 +11,6 @@ var (
 	botID string
 	session *discordgo.Session
 	commandPattern *regexp.Regexp
-	mentionPattern *regexp.Regexp
-	channelPattern *regexp.Regexp
 )
 
 
@@ -33,8 +31,6 @@ func startDiscordBot() {
 	botID = user.ID
 
 	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
-	mentionPattern, _ = regexp.Compile(`[\\]?<@[!]?\d+>`)
-	channelPattern, _ = regexp.Compile(`[\\]?<#\d+>`)
 
 	session.AddHandler(chatEventHandler)
 
@@ -44,67 +40,6 @@ func startDiscordBot() {
 		log.Println("error opening connection,", err)
 		return
 	}
-	
-	// footer := &discordgo.MessageEmbedFooter{
-	// 	Text: "Brute: Long long long long long message",
-	// 	IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
-	// }
-	// image := &discordgo.MessageEmbedImage{
-	// 	URL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
-	// 	Width: 200,
-	// 	Height: 200,
-	// }
-	// thumb := &discordgo.MessageEmbedThumbnail{
-	// 	URL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
-	// 	Width: 564,
-	// 	Height: 564,
-	// }
-	// provider := &discordgo.MessageEmbedProvider{
-	// 	URL: "https://google.com",
-	// 	Name: "providername",
-	// }
-    // author := &discordgo.MessageEmbedAuthor{
-	// 	URL: "https://userurl.com",
-	// 	Name: "Brute",
-	// 	IconURL: "https://image.flaticon.com/teams/new/1-freepik.jpg",
-	// }
-    // fields := []*discordgo.MessageEmbedField{{
-	//     Name: "embedfieldname1",
-	//     Value: "embedfieldvalue1",
-	//     Inline: true,
-	// },
-	// {
-	// 	Name: "embedfieldname2",
-	// 	Value: "embedfieldvalue2",
-	// 	Inline: true,
-	// },
-	// {
-	// 	Name: "embedfieldname3",
-	// 	Value: "embedfieldvalue3",
-	// 	Inline: false,
-	// },
-	// {
-	// 	Name: "embedfieldname4",
-	// 	Value: "embedfieldvalue4",
-	// 	Inline: false,
-	// }}
-	
-	// embed := &discordgo.MessageEmbed{
-	// 	// URL: "https://google.de",
-	// 	// Type: "Type",
-	// 	// Title: "Title",
-	// 	Description: "Long long long long long message",
-	// 	// Timestamp: "2017-01-01T23:59:59",
-	// 	// Color: 255*256*256 + 128*256 + 64,
-	// 	// Footer: footer,
-	// 	// Image: image,
-	// 	// Thumbnail: thumb,
-	// 	// Provider: provider,
-	// 	Author: author,
-	// 	// Fields: fields,
-	// }
-		
-	// _, _ = session.ChannelMessageSendEmbed("242940165516034049", embed)
 	
 	log.Println("Discord Bot is now running.")
 }
@@ -129,7 +64,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	
 	if len(commandMatches) == 0 { // this is a regular message
-		server, ok := GetServerLinkedToChannel(m.ChannelID)
+		server, ok := getServerLinkedToChannel(m.ChannelID)
 		if !ok {
 			// this channel isnt linked to any server, so just do nothing
 			return
@@ -156,16 +91,16 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				respond("You need to specify a server")
 				return
 			}
-			server, ok := GetServerByName(fields[1])
+			server, ok := getServerByName(fields[1])
 			if !ok {
 				respond("The server '" + fields[1] + "' is not configured")
 				return
 			}
-			if !IsAdminForServer(author, server) {
+			if !isAdminForServer(author, server) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
-			if err := LinkChannelIDToServer(m.ChannelID, server); err != nil {
+			if err := linkChannelIDToServer(m.ChannelID, server); err != nil {
 				respond(err.Error())
 			} else {
 				respond("This channel is now linked to '" + server.Name + "'")
@@ -189,7 +124,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	
 	// now handle the commands that require a linked server
-	server, isServerLinked := GetServerLinkedToChannel(m.ChannelID)
+	server, isServerLinked := getServerLinkedToChannel(m.ChannelID)
 	if !isServerLinked {
 		respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
@@ -197,15 +132,15 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	switch commandMatches[1] {
 		case "unlink":
-			if !IsAdminForServer(author, server) {
+			if !isAdminForServer(author, server) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
-			UnlinkChannelFromServer(server)
+			unlinkChannelFromServer(server)
 			respond("Unlinked this channel")
 			
 		case "rcon":
-			if !IsAdminForServer(author, server) {
+			if !isAdminForServer(author, server) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
@@ -233,96 +168,4 @@ func getHelpMessage() string {
 !list                            - prints the server linked to this channel
 !list all                        - prints all linked servers
 ` + "```"
-}
-
-
-func mentionTranslator(mentions []*discordgo.User) (func(string) string) {
-	return func(match string) string {
-		id := strings.Trim(match, "\\<@!>")
-		for _, mention := range mentions {
-			if mention.ID == id {
-				return "@" + mention.Username
-			}
-		}
-		return match
-	}
-}
-
-
-func channelTranslator(mentions []*discordgo.User) (func(string) string) {
-	return func(match string) string {
-		id := strings.Trim(match, "\\<#>")
-		if channel, err := session.State.Channel(id); err == nil {
-			return "#" + channel.Name
-		} else {
-			return "#deleted-channel"
-		}
-		return match
-	}
-}
-
-
-func formatDiscordMessage(m *discordgo.MessageCreate) string {
-	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
-	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions) )
-	return message
-}
-
-
-func forwardChatMessageToDiscord(serverName string, username string, steamID3 int32, teamNumber int, message string) {
-	if server, ok := Servers[serverName]; ok {
-		
-		switch Config.Discord.MessageStyle {
-		default: fallthrough
-		case "multiline":
-			embed := &discordgo.MessageEmbed{
-				Description: message,
-				Color: GetTeamColorForChatMessage(teamNumber),
-				Author: &discordgo.MessageEmbedAuthor{
-					URL: GetSteamProfileLinkForSteamID3(steamID3),
-					Name: username,
-					IconURL: GetAvatarForSteamID3(steamID3),
-				},
-			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
-		
-		case "inline": fallthrough
-		case "oneline":
-			embed := &discordgo.MessageEmbed{
-				Color: GetTeamColorForChatMessage(teamNumber),
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: username +": " + message,
-					IconURL: GetAvatarForSteamID3(steamID3),
-				},
-			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
-		
-		case "text":
-			_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ChatMessagePrefix + "**" + username + ":** " + message)
-		}
-	}
-}
-
-
-func forwardGameStatusToDiscord(serverName string, cmdType string, message string) {
-	if server, ok := Servers[serverName]; ok {
-		
-		switch Config.Discord.MessageStyle {
-		default: fallthrough
-		case "multiline": fallthrough
-		case "inline": fallthrough
-		case "oneline":
-			embed := &discordgo.MessageEmbed{
-				Color: GetColorForMessage(cmdType),
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: message,
-					IconURL: Config.Servers[serverName].ServerIconUrl,
-				},
-			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
-		
-		case "text":
-			_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].StatusMessagePrefix + message)
-		}
-	}
 }

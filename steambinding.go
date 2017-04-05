@@ -44,18 +44,18 @@ var myClient = &http.Client{Timeout: 10 * time.Second}
 var AvatarCache map[int32]*Avatar
 
 
-func InitSteamBinding() {
+func initSteamBinding() {
     AvatarCache = make(map[int32]*Avatar)
 }
 
-func GetAvatarForSteamID3(steamID3 int32) string {
+func getAvatarForSteamID3(steamID3 int32) string {
     if avatar, ok := AvatarCache[steamID3]; ok {
         if time.Now().Before(avatar.lastUpdated.Add(time.Duration(24) * time.Hour)) {
             return avatar.url
         }
     }
     steamID := getSteamID(steamID3)
-    steamProfile, err := GetSteamProfile(steamID)
+    steamProfile, err := getSteamProfile(steamID)
     if err == nil {
         AvatarCache[steamID3] = &Avatar{
             url : steamProfile.Avatar,
@@ -67,7 +67,7 @@ func GetAvatarForSteamID3(steamID3 int32) string {
 }
 
 
-func GetSteamProfileLinkForSteamID3(steamID3 int32) string {
+func getSteamProfileLinkForSteamID3(steamID3 int32) string {
     if steamID3 == 0 {
         return ""
     }
@@ -93,7 +93,7 @@ func getJson(url string, target interface{}) error {
 }
 
 
-func GetSteamProfile(steamID int64) (*SteamPlayer, error) {
+func getSteamProfile(steamID int64) (*SteamPlayer, error) {
     if steamID == 0 {
         return nil, errors.New("Invalid Steamid")
     }
