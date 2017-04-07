@@ -128,8 +128,6 @@ func init() {
 
 func main() {
     loadConfig(configFile)
-    initGameMessages()
-    initSteamBinding()
 	startDiscordBot() // non-blocking
 	startHTTPServer() // blocking
 }

@@ -18,7 +18,7 @@ type Command struct {
 }
 
 
-func initGameMessages() {
+func init() {
 	mentionPattern, _ = regexp.Compile(`[\\]?<@[!]?\d+>`)
 	channelPattern, _ = regexp.Compile(`[\\]?<#\d+>`)
 }

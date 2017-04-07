@@ -44,8 +44,8 @@ var myClient = &http.Client{Timeout: 10 * time.Second}
 var AvatarCache map[int32]*Avatar
 
 
-func initSteamBinding() {
-    AvatarCache = make(map[int32]*Avatar)
+func init() {
+    AvatarCache = make(map[SteamID3]*Avatar)
 }
 
 func getAvatarForSteamID3(steamID3 int32) string {
