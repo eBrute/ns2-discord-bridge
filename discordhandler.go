@@ -52,7 +52,7 @@ func startDiscordBot() {
 }
 
 
-func getResponseHandler(s *discordgo.Session, m *discordgo.MessageCreate, message []string) *ResponseHandler {
+func createResponseHandler(s *discordgo.Session, m *discordgo.MessageCreate, message []string) *ResponseHandler {
 	return &ResponseHandler{
 		func(text string) {
 			_, _ = s.ChannelMessageSend(m.ChannelID, text)
@@ -87,7 +87,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// message was a discord command
 	messageFields := strings.Fields(m.Content)[1:]
-	responseHandler := getResponseHandler(s, m, messageFields)
+	responseHandler := createResponseHandler(s, m, messageFields)
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
