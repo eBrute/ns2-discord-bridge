@@ -5,33 +5,36 @@ import (
     "github.com/bwmarrin/discordgo"
 )
 
+type TeamNumber int
+type MessageType string
+
 var DefaultMessageColor int = 75*256*256 + 78*256 + 82
 
 
-func getColorForMessage(messagetype string) int {
+func (messagetype MessageType) getColor() int {
     switch messagetype {
-        case "chat" :        return getColorFromConfig(Config.Messagestyles.Rich.ChatMessageColor)
-        case "playerjoin" :  return getColorFromConfig(Config.Messagestyles.Rich.PlayerJoinColor)
-        case "playerleave" : return getColorFromConfig(Config.Messagestyles.Rich.PlayerLeaveColor)
-        case "status" :      return getColorFromConfig(Config.Messagestyles.Rich.StatusColor)
-        case "adminprint" :  return getColorFromConfig(Config.Messagestyles.Rich.StatusColor)
+        case "chat" :        return Config.getColor(Config.Messagestyles.Rich.ChatMessageColor, DefaultMessageColor)
+        case "playerjoin" :  return Config.getColor(Config.Messagestyles.Rich.PlayerJoinColor, DefaultMessageColor)
+        case "playerleave" : return Config.getColor(Config.Messagestyles.Rich.PlayerLeaveColor, DefaultMessageColor)
+        case "status" :      return Config.getColor(Config.Messagestyles.Rich.StatusColor, DefaultMessageColor)
+        case "adminprint" :  return Config.getColor(Config.Messagestyles.Rich.StatusColor, DefaultMessageColor)
         default :            return DefaultMessageColor
     }
 }
 
 
-func getTeamColorForChatMessage(teamNumber int) int {
+func (teamNumber TeamNumber) getColor() int {
     switch teamNumber {
         default: fallthrough
-        case 0 : return getColorFromConfig(Config.Messagestyles.Rich.ChatMessageReadyRoomColor)
-        case 1 : return getColorFromConfig(Config.Messagestyles.Rich.ChatMessageMarineColor)
-        case 2 : return getColorFromConfig(Config.Messagestyles.Rich.ChatMessageAlienColor)
-        case 3 : return getColorFromConfig(Config.Messagestyles.Rich.ChatMessageSpectatorColor)
+        case 0 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageReadyRoomColor, DefaultMessageColor)
+        case 1 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageMarineColor, DefaultMessageColor)
+        case 2 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageAlienColor, DefaultMessageColor)
+        case 3 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageSpectatorColor, DefaultMessageColor)
     }
 }
 
 
-func getTeamSpecifixPrefix(teamNumber int) string {
+func (teamNumber TeamNumber) getText() string {
     messageConfig := Config.Messagestyles.Text
     switch teamNumber {
         case 0: return messageConfig.ChatMessageReadyRoomPrefix
@@ -43,18 +46,10 @@ func getTeamSpecifixPrefix(teamNumber int) string {
 }
 
 
-func getColorFromConfig(color []int) int {
-    if len(color) != 3 {
-        return DefaultMessageColor
-    }
-    return color[0]*256*256 + color[1]*256 + color[2]
-}
-
-
-func buildTextChatMessage(serverName string, username string, teamNumber int, message string) string {
+func buildTextChatMessage(serverName string, username string, teamNumber TeamNumber, message string) string {
     serverConfig := Config.Servers[serverName]
     messageFormat := Config.Messagestyles.Text.ChatMessageFormat
-    teamSpecificString := getTeamSpecifixPrefix(teamNumber)
+    teamSpecificString := teamNumber.getText()
     serverSpecificString := serverConfig.ServerChatMessagePrefix
     replacer := strings.NewReplacer("%p", username, "%m", message, "%t", teamSpecificString, "%s", serverSpecificString)
 	formattedMessage := replacer.Replace(messageFormat)
@@ -62,13 +57,13 @@ func buildTextChatMessage(serverName string, username string, teamNumber int, me
 }
 
 
-func buildTextPlayerEvent(serverName, cmdType, username, message string) string {
+func buildTextPlayerEvent(serverName string, messagetype MessageType, username string, message string) string {
     serverConfig := Config.Servers[serverName]
     messageConfig := Config.Messagestyles.Text
     messageFormat := "%s %p %m"
-    switch cmdType {
+    switch messagetype {
         case "playerjoin": messageFormat = messageConfig.PlayerJoinFormat
-        case "playerleave": messageFormat = messageConfig.PlayerJoinFormat
+        case "playerleave": messageFormat = messageConfig.PlayerLeaveFormat
     }
     serverSpecificString := serverConfig.ServerChatMessagePrefix
     replacer := strings.NewReplacer("%p", username, "%m", message, "%s", serverSpecificString)
@@ -77,19 +72,19 @@ func buildTextPlayerEvent(serverName, cmdType, username, message string) string 
 }
 
 
-func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber int, message string) {
-	if server, ok := Servers[serverName]; ok {
+func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber TeamNumber, message string) {
+	if server, ok := serverList[serverName]; ok {
 		
 		switch Config.Discord.MessageStyle {
 		default: fallthrough
 		case "multiline":
 			embed := &discordgo.MessageEmbed{
 				Description: message,
-				Color: getTeamColorForChatMessage(teamNumber),
+				Color: teamNumber.getColor(),
 				Author: &discordgo.MessageEmbedAuthor{
-					URL: getSteamProfileLinkForSteamID(steamID),
+					URL: steamID.getSteamProfileLink(),
 					Name: username,
-					IconURL: getAvatarForSteamID(steamID),
+					IconURL: steamID.getAvatar(),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
@@ -97,10 +92,10 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 		case "inline": fallthrough
 		case "oneline":
 			embed := &discordgo.MessageEmbed{
-				Color: getTeamColorForChatMessage(teamNumber),
+				Color: teamNumber.getColor(),
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: username +": " + message,
-					IconURL: getAvatarForSteamID(steamID),
+					IconURL: steamID.getAvatar(),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
@@ -112,12 +107,12 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 }
 
 
-func forwardPlayerEventToDiscord(serverName string, cmdType string, username string, steamID SteamID3, message string) {
-	if server, ok := Servers[serverName]; ok {
+func forwardPlayerEventToDiscord(serverName string, messagetype MessageType, username string, steamID SteamID3, message string) {
+	if server, ok := serverList[serverName]; ok {
 		eventText := ""
-		switch cmdType {
-    		case "playerjoin": eventText = " joined "
-		          case "playerleave": eventText = " left "
+		switch messagetype {
+            case "playerjoin": eventText = " joined "
+            case "playerleave": eventText = " left "
 		}
 		
 		switch Config.Discord.MessageStyle {
@@ -126,23 +121,23 @@ func forwardPlayerEventToDiscord(serverName string, cmdType string, username str
     		case "inline": fallthrough
     		case "oneline":
     			embed := &discordgo.MessageEmbed{
-    				Color: getColorForMessage(cmdType),
+    				Color: messagetype.getColor(),
     				Footer: &discordgo.MessageEmbedFooter{
     					Text: username + eventText + message,
-    					IconURL: getAvatarForSteamID(steamID),
+    					IconURL: steamID.getAvatar(),
     				},
     			}
     			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
     		
     		case "text":
-    			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, cmdType, username, message))
+    			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, messagetype, username, message))
 		}
 	}
 }
 
 
-func forwardGameStatusToDiscord(serverName string, cmdType string, message string) {
-	if server, ok := Servers[serverName]; ok {
+func forwardGameStatusToDiscord(serverName string, messagetype MessageType, message string) {
+	if server, ok := serverList[serverName]; ok {
 		
 		switch Config.Discord.MessageStyle {
     		default: fallthrough
@@ -150,7 +145,7 @@ func forwardGameStatusToDiscord(serverName string, cmdType string, message strin
     		case "inline": fallthrough
     		case "oneline":
     			embed := &discordgo.MessageEmbed{
-    				Color: getColorForMessage(cmdType),
+    				Color: messagetype.getColor(),
     				Footer: &discordgo.MessageEmbedFooter{
     					Text: message,
     					IconURL: Config.Servers[serverName].ServerIconUrl,

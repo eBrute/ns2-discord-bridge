@@ -1,0 +1,123 @@
+package main
+
+import (
+    "log"
+    "sync"
+    "errors"
+    "time"
+    "github.com/bwmarrin/discordgo"
+)
+
+type ServerList map[string]*Server
+var serverList ServerList
+
+type Server struct {
+    Name string
+    ChannelID string
+    Admins []string
+    Prefix string
+    Outbound chan *Command
+    Mux sync.Mutex
+    ActiveThread int
+    TimeoutSet chan int
+    TimeoutReset chan int
+}
+
+
+func init() {
+    serverList = make(map[string]*Server)
+}
+
+
+func (serverList ServerList) getServerByName(serverName string) (server *Server, ok bool) {
+    server, ok = serverList[serverName]
+    return
+}
+
+
+func (serverList ServerList) getServerLinkedToChannel(channelID string) (server *Server, success bool) {
+    for _, v := range serverList {
+        if v.ChannelID == channelID {
+            return v, true
+        }
+    }
+    return
+}
+
+
+func (server *Server) linkChannelID(channelID string) error {
+    if linkedServer, ok := serverList.getServerLinkedToChannel(channelID); ok {
+        if linkedServer == server {
+            return errors.New("This channel was already linked to '" + linkedServer.Name + "'")
+        } else {
+            return errors.New("This channel is already linked to '" + linkedServer.Name +"'. Use !unlink first.")
+        }
+    }
+    server.ChannelID = channelID
+    log.Println("Linked channelID " + channelID + " to server " + server.Name)
+    return nil
+}
+
+
+func (server *Server) unlinkChannel() (success bool) {
+    if server.ChannelID != "" {
+        log.Println("Uninked channelID " + server.ChannelID + " from server " + server.Name)
+        server.ChannelID = ""
+        success = true
+    }
+    return
+}
+
+
+func (server *Server) isAdmin(user *discordgo.User) bool {
+    userName := user.Username + "#" + user.Discriminator
+    userID := user.ID
+    if len(server.Admins) == 0 {
+        return true
+    }
+    for _, admin := range server.Admins {
+        if admin == userID || admin == userName {
+            return true
+        }
+    }
+    return false
+}
+
+
+func (server *Server) clearOutboundChannel() {
+    for {
+        select {
+            case <- server.Outbound:
+            default: return
+        }
+    }
+}
+
+
+func (server *Server) clearOutboundChannelOnInactivity() {
+    var timeout int = -1
+    for {
+        select {
+        case <- server.TimeoutReset:
+            // log.Println("Timer stopped, server retrieved message")
+            timeout = -1
+            // NOTE here we assume that the whole channel was cleared, although we only now that one value was read
+        case timeout = <- server.TimeoutSet:
+            timeout = timeout * 100
+            // log.Println("Timer set to", timeout/100)
+        default:
+        }
+        if timeout == 0 {
+            // log.Println("Timeout reached")
+            server.clearOutboundChannel()
+            timeout = -1
+        }
+        if timeout > 0 {
+            timeout--
+            // if timeout % 100 == 0 {
+            //     log.Println("Time left for server to retrieve message: ", timeout/100)
+            // }
+        }
+        time.Sleep(10 * time.Millisecond)
+    }
+}

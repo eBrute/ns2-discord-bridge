@@ -63,7 +63,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
 	if len(commandMatches) == 0 { // this is a regular message
-		server, ok := getServerLinkedToChannel(m.ChannelID)
+		server, ok := serverList.getServerLinkedToChannel(m.ChannelID)
 		if !ok {
 			// this channel isnt linked to any server, so just do nothing
 			return
@@ -84,16 +84,16 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				respond("You need to specify a server")
 				return
 			}
-			server, ok := getServerByName(fields[1])
+			server, ok := serverList.getServerByName(fields[1])
 			if !ok {
 				respond("The server '" + fields[1] + "' is not configured")
 				return
 			}
-			if !isAdminForServer(author, server) {
+			if !server.isAdmin(author) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
-			if err := linkChannelIDToServer(m.ChannelID, server); err != nil {
+			if err := server.linkChannelID(m.ChannelID); err != nil {
 				respond(err.Error())
 			} else {
 				respond("This channel is now linked to '" + server.Name + "'")
@@ -102,7 +102,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		case "list":
 			listAll := len(fields) > 1  && fields[1] == "all"
-			for _, server := range Servers {
+			for _, server := range serverList {
 				id := server.ChannelID
 				if listAll || id == m.ChannelID {
 					respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
@@ -117,7 +117,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	
 	// now handle the commands that require a linked server
-	server, isServerLinked := getServerLinkedToChannel(m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(m.ChannelID)
 	if !isServerLinked {
 		respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
@@ -125,15 +125,15 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	switch commandMatches[1] {
 		case "unlink":
-			if !isAdminForServer(author, server) {
+			if !server.isAdmin(author) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}
-			unlinkChannelFromServer(server)
+			server.unlinkChannel()
 			respond("Unlinked this channel")
 			
 		case "rcon":
-			if !isAdminForServer(author, server) {
+			if !server.isAdmin(author) {
 				respond("You are not registered as an admin for server '" + server.Name + "'")
 				return
 			}

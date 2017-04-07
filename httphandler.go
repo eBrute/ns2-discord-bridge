@@ -29,7 +29,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	server, ok := Servers[serverName]
+	server, ok := serverList[serverName]
 	if !ok {
 		log.Println("Recieved message but could not get a channel for '" + serverName + "'. Link a channel first with '!link <servername>'")
 		return
@@ -43,25 +43,28 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	server.Mux.Unlock()
 	
 	// handle the incoming request
-	switch cmdtype := request.PostFormValue("type"); cmdtype {
+	switch messageType := request.PostFormValue("type"); messageType {
 		case "init" : // nothing to do, just keep the connection
 		case "chat" :
 			player := request.PostFormValue("player")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			teamNumber, _ := strconv.Atoi(request.PostFormValue("teamnumber"))
 			message := request.PostFormValue("message")
-			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), teamNumber, message)
+			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), TeamNumber(teamNumber), message)
+			
 		case "playerjoin" : fallthrough
 		case "playerleave" : 
 			player := request.PostFormValue("player")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			message := request.PostFormValue("message")
-			forwardPlayerEventToDiscord(serverName, cmdtype, player, SteamID3(steamid), message)
+			forwardPlayerEventToDiscord(serverName, MessageType(messageType), player, SteamID3(steamid), message)
+			
 		case "status" : fallthrough
 		case "adminprint" :
 			message := request.PostFormValue("message")
-			forwardGameStatusToDiscord(serverName, cmdtype, message)
-		default: return
+			forwardGameStatusToDiscord(serverName, MessageType(messageType), message)
+			
+		default : return
 	}
 	
 	// build a response

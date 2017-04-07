@@ -11,7 +11,7 @@ import (
 type SteamID3  uint32
 type SteamID64 uint64
 
-const steamBaseline = 76561197960265728
+const steamBaseline uint64 = 76561197960265728
 
 type ISteamUser struct {
     Response SteamPlayerList
@@ -52,23 +52,23 @@ func init() {
 }
 
 
-func (id SteamID3) to64() SteamID64 {
-	return SteamID64(steamBaseline + uint64(id))
+func (steamID SteamID3) to64() SteamID64 {
+	return SteamID64(steamBaseline + uint64(steamID))
 }
 
 
-func (id SteamID64) String() string {
-	return strconv.FormatUint(uint64(id), 10)
+func (steamID SteamID64) String() string {
+	return strconv.FormatUint(uint64(steamID), 10)
 }
 
 
-func getAvatarForSteamID(steamID SteamID3) string {
+func (steamID SteamID3) getAvatar() string {
     if avatar, ok := AvatarCache[steamID]; ok {
         if time.Now().Before(avatar.lastUpdated.Add(time.Duration(24) * time.Hour)) {
             return avatar.url
         }
     }
-    steamProfile, err := getSteamProfile(steamID.to64())
+    steamProfile, err := steamID.to64().getSteamProfile()
     if err == nil {
         AvatarCache[steamID] = &Avatar{
             url : steamProfile.Avatar,
@@ -80,7 +80,7 @@ func getAvatarForSteamID(steamID SteamID3) string {
 }
 
 
-func getSteamProfileLinkForSteamID(steamID SteamID3) string {
+func (steamID SteamID3) getSteamProfileLink() string {
     if steamID == 0 {
         return ""
     }
@@ -100,7 +100,7 @@ func getJson(url string, target interface{}) error {
 }
 
 
-func getSteamProfile(steamID SteamID64) (*SteamPlayer, error) {
+func (steamID SteamID64) getSteamProfile() (*SteamPlayer, error) {
     if steamID == 0 {
         return nil, errors.New("Invalid Steamid")
     }
