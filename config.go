@@ -86,20 +86,4 @@ func (config *Configuration) loadConfig(configFile string) {
 	if err := toml.Unmarshal(buf, &Config); err != nil {
 		panic(err)
 	}
-	
-	for serverName, v := range Config.Servers {
-		server := &Server{
-			Name : serverName,
-			Admins : make([]string, 0),
-			Outbound : make(chan *Command),
-			TimeoutSet : make(chan int),
-			TimeoutReset : make(chan int),
-		}
-		server.ChannelID = v.ChannelID
-		for _, admin := range v.Admins {
-			server.Admins = append(server.Admins, admin)
-		}
-		serverList[serverName] = server
-		log.Println("Linked server '"+ serverName +"' to channel", v.ChannelID)
-	}
 }

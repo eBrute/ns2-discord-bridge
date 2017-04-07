@@ -12,7 +12,7 @@ import (
 func startHTTPServer() {
 	http.HandleFunc("/discordbridge", httpHandler)
 
-	log.Println("Listening for chat messages on", Config.Httpserver.Address)
+	log.Println("Listening for messages on", Config.Httpserver.Address)
 	log.Println("Press CTRL-C to exit.")
 	log.Fatal(http.ListenAndServe(Config.Httpserver.Address, nil))
 }

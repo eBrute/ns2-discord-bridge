@@ -72,10 +72,10 @@ func (server *Server) unlinkChannel() (success bool) {
 func (server *Server) isAdmin(user *discordgo.User) bool {
 	userName := user.Username + "#" + user.Discriminator
 	userID := user.ID
-	if len(server.Admins) == 0 {
+	if len(Config.Servers[server.Name].Admins) == 0 {
 		return true
 	}
-	for _, admin := range server.Admins {
+	for _, admin := range Config.Servers[server.Name].Admins {
 		if admin == userID || admin == userName {
 			return true
 		}

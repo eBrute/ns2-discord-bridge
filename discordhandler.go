@@ -13,6 +13,13 @@ var (
 	commandPattern *regexp.Regexp
 )
 
+type ResponseHandler struct{
+	respond func(string)
+	s *discordgo.Session
+	m *discordgo.MessageCreate
+	message []string
+}
+
 
 func startDiscordBot() {
 	
@@ -45,9 +52,14 @@ func startDiscordBot() {
 }
 
 
-func getResponseFunction(s *discordgo.Session, m *discordgo.MessageCreate) func(string) {
-	return func(text string) {
-		_, _ = s.ChannelMessageSend(m.ChannelID, text)
+func getResponseHandler(s *discordgo.Session, m *discordgo.MessageCreate, message []string) *ResponseHandler {
+	return &ResponseHandler{
+		func(text string) {
+			_, _ = s.ChannelMessageSend(m.ChannelID, text)
+		},
+		s,
+		m,
+		message,
 	}
 }
 
@@ -74,86 +86,95 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	// message was a discord command
-	fields := strings.Fields(m.Content)
-	respond := getResponseFunction(s, m)
+	messageFields := strings.Fields(m.Content)[1:]
+	responseHandler := getResponseHandler(s, m, messageFields)
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
-		case "link":
-			if len(fields) < 2 {
-				respond("You need to specify a server")
-				return
-			}
-			server, ok := serverList.getServerByName(fields[1])
-			if !ok {
-				respond("The server '" + fields[1] + "' is not configured")
-				return
-			}
-			if !server.isAdmin(author) {
-				respond("You are not registered as an admin for server '" + server.Name + "'")
-				return
-			}
-			if err := server.linkChannelID(m.ChannelID); err != nil {
-				respond(err.Error())
-			} else {
-				respond("This channel is now linked to '" + server.Name + "'")
-			}
-			return
-
-		case "list":
-			listAll := len(fields) > 1  && fields[1] == "all"
-			for _, server := range serverList {
-				id := server.ChannelID
-				if listAll || id == m.ChannelID {
-					respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
-				}
-			}
-			return
-			
-		case "help": fallthrough
-		case "commands":
-			respond(getHelpMessage())
-			return
-	}
-	
-	// now handle the commands that require a linked server
-	server, isServerLinked := serverList.getServerLinkedToChannel(m.ChannelID)
-	if !isServerLinked {
-		respond("Channel is not linked to any server. Use !link <servername> first.")
-		return
-	}
-	
-	switch commandMatches[1] {
-		case "unlink":
-			if !server.isAdmin(author) {
-				respond("You are not registered as an admin for server '" + server.Name + "'")
-				return
-			}
-			server.unlinkChannel()
-			respond("Unlinked this channel")
-			
-		case "rcon":
-			if !server.isAdmin(author) {
-				respond("You are not registered as an admin for server '" + server.Name + "'")
-				return
-			}
-			command := strings.Join(fields[1:], " ")
-			server.TimeoutSet <- 60 // sec
-			server.Outbound <- createRconCommand(m.Author.Username, command)
-		
-		default:
-			respond(getHelpMessage())
+		case "link": responseHandler.linkChannel()
+		case "list": responseHandler.listChannel()
+		case "unlink": responseHandler.unlinkChannel()
+		case "rcon": responseHandler.sendRconCommand()
+		default : fallthrough
+		case "commands": fallthrough
+		case "help": responseHandler.printHelpMessage()
 	}
 }
 
 
-func getHelpMessage() string {
-	return "```" + `
+func (r *ResponseHandler) linkChannel() {
+	if len(r.message) < 1 {
+		r.respond("You need to specify a server")
+		return
+	}
+	server, ok := serverList.getServerByName(r.message[0])
+	if !ok {
+		r.respond("The server '" + r.message[0] + "' is not configured")
+		return
+	}
+	if !server.isAdmin(r.m.Author) {
+		r.respond("You are not registered as an admin for server '" + server.Name + "'")
+		return
+	}
+	if err := server.linkChannelID(r.m.ChannelID); err != nil {
+		r.respond(err.Error())
+	} else {
+		r.respond("This channel is now linked to '" + server.Name + "'")
+	}
+}
+
+
+func (r *ResponseHandler) unlinkChannel() {
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	if !isServerLinked {
+		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+
+	if !server.isAdmin(r.m.Author) {
+		r.respond("You are not registered as an admin for server '" + server.Name + "'")
+		return
+	}
+	server.unlinkChannel()
+	r.respond("Unlinked this channel")
+}
+
+
+func (r *ResponseHandler) listChannel() {
+	listAll := len(r.message) > 0 && r.message[0] == "all"
+	for _, server := range serverList {
+		id := server.ChannelID
+		if listAll || id == r.m.ChannelID {
+			r.respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
+		}
+	}
+}
+
+
+func (r *ResponseHandler) sendRconCommand() {
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	if !isServerLinked {
+		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+
+	if !server.isAdmin(r.m.Author) {
+		r.respond("You are not registered as an admin for server '" + server.Name + "'")
+		return
+	}
+	command := strings.Join(r.message[:], " ")
+	server.TimeoutSet <- 60 // sec
+	server.Outbound <- createRconCommand(r.m.Author.Username, command)
+}
+
+
+func (r *ResponseHandler) printHelpMessage() {
+	r.respond("```" + `
 !help                            - prints this help
 !commands                        - prints this help
 !link <server>                   - links server to this channel
 !unlink                          - unlinks this channel
 !list                            - prints the server linked to this channel
 !list all                        - prints all linked servers
-` + "```"
+` + "```")
 }
