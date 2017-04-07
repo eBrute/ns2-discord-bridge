@@ -1,9 +1,9 @@
 package main
 
 import (
-    "strings"
+	"strings"
 	"regexp"
-    "github.com/bwmarrin/discordgo"
+	"github.com/bwmarrin/discordgo"
 )
 
 var (
@@ -12,9 +12,9 @@ var (
 )
 
 type Command struct {
-    Type    string `json:"type"`
-    User    string `json:"user"`
-    Content string `json:"content"`
+	Type    string `json:"type"`
+	User    string `json:"user"`
+	Content string `json:"content"`
 }
 
 

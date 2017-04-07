@@ -1,7 +1,7 @@
 package main
 
 import (
-    "flag"
+	"flag"
 )
 
 var configFile string
@@ -14,12 +14,12 @@ func init() {
 
 
 func main() {
-    Config.loadConfig(configFile)
+	Config.loadConfig(configFile)
 
-    for _, server := range serverList {
-        go server.clearOutboundChannelOnInactivity()
-    }
-    
+	for _, server := range serverList {
+		go server.clearOutboundChannelOnInactivity()
+	}
+	
 	startDiscordBot() // non-blocking
 	startHTTPServer() // blocking
 }

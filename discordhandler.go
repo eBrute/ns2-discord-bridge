@@ -46,9 +46,9 @@ func startDiscordBot() {
 
 
 func getResponseFunction(s *discordgo.Session, m *discordgo.MessageCreate) func(string) {
-    return func(text string) {
-        _, _ = s.ChannelMessageSend(m.ChannelID, text)
-    }
+	return func(text string) {
+		_, _ = s.ChannelMessageSend(m.ChannelID, text)
+	}
 }
 
 

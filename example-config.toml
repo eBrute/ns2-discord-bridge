@@ -3,24 +3,24 @@ token = "xxxxxx-your-discord-bot-token"
 message_style = "oneline" # options are: "multiline", "oneline", "text"
 
 [messagestyles]
-    [messagestyles.rich]
-    chat_message_color = [50, 127, 180]
-    chat_message_ready_room_color = [75, 78, 82]
-    chat_message_marine_color = [50, 127, 180]
-    chat_message_alien_color = [246, 92, 0]
-    chat_message_spectator_color = [211, 215, 207]
-    player_join_color = [67, 181, 129]
-    player_leave_color = [237, 72, 102]
-    status_color = [250, 166, 26]
+	[messagestyles.rich]
+	chat_message_color = [50, 127, 180]
+	chat_message_ready_room_color = [75, 78, 82]
+	chat_message_marine_color = [50, 127, 180]
+	chat_message_alien_color = [246, 92, 0]
+	chat_message_spectator_color = [211, 215, 207]
+	player_join_color = [67, 181, 129]
+	player_leave_color = [237, 72, 102]
+	status_color = [250, 166, 26]
 
-    [messagestyles.text]
-    chat_message_format = "%s __[%t]__ **%p**: %m" # %p - player, %m - message, %t - teamspecific prefix, %s - serverspecific prefix
-    chat_message_ready_room_prefix = "RR"
-    chat_message_marine_prefix = "M"
-    chat_message_alien_prefix = "A"
-    chat_message_spectator_prefix = "S"
-    player_join_format = "%s %p joined %m"
-    player_leave_format = "%s %p left %m"
+	[messagestyles.text]
+	chat_message_format = "%s __[%t]__ **%p**: %m" # %p - player, %m - message, %t - teamspecific prefix, %s - serverspecific prefix
+	chat_message_ready_room_prefix = "RR"
+	chat_message_marine_prefix = "M"
+	chat_message_alien_prefix = "A"
+	chat_message_spectator_prefix = "S"
+	player_join_format = "%s %p joined %m"
+	player_leave_format = "%s %p left %m"
 
 [httpserver]
 address = ":8080"
