@@ -14,28 +14,29 @@ type SteamID64 uint64
 const steamBaseline uint64 = 76561197960265728
 
 type ISteamUser struct {
-    Response SteamPlayerList
+    Response SteamPlayerList     `json:"response"`
 }
 
 type SteamPlayerList struct {
-    Players []SteamPlayer
+    Players []SteamPlayer        `json:"players"`
 }
 
 type SteamPlayer struct {
-    Steamid string
-    Communityvisibilitystate int
-	Profilestate int
-	Personaname string
-	Lastlogoff int64
-    Avatar string
-    Avatarmedium string
-    Avatarfull string
-    Personastate int
-	Primaryclanid string
-	Timecreated int64
-	Personastateflags int
-	Loccountrycode string
-	Locstatecode string
+    SteamID string               `json:"steamid"`
+    CommunityVisibilityState int `json:"communityvisibilitystate"`
+    ProfileState int             `json:"profilestate"`
+	PersonaName string           `json:"personaname"`
+	LastLogoff int64             `json:"lastlogoff"`
+	ProfileURL string            `json:"profileurl"`
+    Avatar string                `json:"avatar"`
+    AvatarMedium string          `json:"avatarmedium"`
+    AvatarFull string            `json:"avatarfull"`
+    PersonaState int             `json:"personastate"`
+    PrimaryClanID string         `json:"primaryclanid"`
+	TimeCreated int64            `json:"timecreated"`
+	PersonaStateFlags int        `json:"personastateflags"`
+	LocCountryCode string        `json:"loccountrycode"`
+	LocStateCode string          `json:"locstatecode"`
 }
 
 type Avatar struct {
