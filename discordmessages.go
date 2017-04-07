@@ -12,35 +12,37 @@ var DefaultMessageColor int = 75*256*256 + 78*256 + 82
 
 
 func (messagetype MessageType) getColor() int {
+	msgConfig := Config.Messagestyles.Rich
 	switch messagetype {
-		case "chat" :        return Config.getColor(Config.Messagestyles.Rich.ChatMessageColor, DefaultMessageColor)
-		case "playerjoin" :  return Config.getColor(Config.Messagestyles.Rich.PlayerJoinColor, DefaultMessageColor)
-		case "playerleave" : return Config.getColor(Config.Messagestyles.Rich.PlayerLeaveColor, DefaultMessageColor)
-		case "status" :      return Config.getColor(Config.Messagestyles.Rich.StatusColor, DefaultMessageColor)
-		case "adminprint" :  return Config.getColor(Config.Messagestyles.Rich.StatusColor, DefaultMessageColor)
+		case "chat" :        return Config.getColor(msgConfig.ChatMessageColor, DefaultMessageColor)
+		case "playerjoin" :  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
+		case "playerleave" : return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
+		case "status" :      return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
+		case "adminprint" :  return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
 		default :            return DefaultMessageColor
 	}
 }
 
 
 func (teamNumber TeamNumber) getColor() int {
+	msgConfig := Config.Messagestyles.Rich
 	switch teamNumber {
 		default: fallthrough
-		case 0 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageReadyRoomColor, DefaultMessageColor)
-		case 1 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageMarineColor, DefaultMessageColor)
-		case 2 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageAlienColor, DefaultMessageColor)
-		case 3 : return Config.getColor(Config.Messagestyles.Rich.ChatMessageSpectatorColor, DefaultMessageColor)
+		case 0 : return Config.getColor(msgConfig.ChatMessageReadyRoomColor, DefaultMessageColor)
+		case 1 : return Config.getColor(msgConfig.ChatMessageMarineColor, DefaultMessageColor)
+		case 2 : return Config.getColor(msgConfig.ChatMessageAlienColor, DefaultMessageColor)
+		case 3 : return Config.getColor(msgConfig.ChatMessageSpectatorColor, DefaultMessageColor)
 	}
 }
 
 
 func (teamNumber TeamNumber) getText() string {
-	messageConfig := Config.Messagestyles.Text
+	msgConfig := Config.Messagestyles.Text
 	switch teamNumber {
-		case 0: return messageConfig.ChatMessageReadyRoomPrefix
-		case 1: return messageConfig.ChatMessageMarinePrefix
-		case 2: return messageConfig.ChatMessageAlienPrefix
-		case 3: return messageConfig.ChatMessageSpectatorPrefix
+		case 0: return msgConfig.ChatMessageReadyRoomPrefix
+		case 1: return msgConfig.ChatMessageMarinePrefix
+		case 2: return msgConfig.ChatMessageAlienPrefix
+		case 3: return msgConfig.ChatMessageSpectatorPrefix
 		default: return ""
 	}
 }
