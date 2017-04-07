@@ -8,7 +8,10 @@ import (
 type TeamNumber int
 type MessageType string
 
-var DefaultMessageColor int = 75*256*256 + 78*256 + 82
+var (
+	DefaultMessageColor int = 75*256*256 + 78*256 + 82
+	lastMultilineChatMessage *discordgo.Message
+)
 
 
 func (messagetype MessageType) getColor() int {
@@ -74,12 +77,35 @@ func buildTextPlayerEvent(serverName string, messagetype MessageType, username s
 }
 
 
+func getLastMessageID(channelID string) (string, bool) {
+	messages, _ := session.ChannelMessages(channelID, 1, "", "")
+	if len(messages) == 1 {
+		return messages[0].ID, true
+	}
+	return "", false
+}
+
+
 func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber TeamNumber, message string) {
 	if server, ok := serverList[serverName]; ok {
 		
 		switch Config.Discord.MessageStyle {
 		default: fallthrough
 		case "multiline":
+			lastMessageID, ok := getLastMessageID(server.ChannelID);
+			if ok && lastMultilineChatMessage != nil {
+				lastEmbed := lastMultilineChatMessage.Embeds[0]
+				lastAuthor := lastEmbed.Author
+				if  lastMessageID == lastMultilineChatMessage.ID &&
+					lastEmbed.Color == teamNumber.getColor() &&
+					lastAuthor.Name == username &&
+					lastAuthor.URL == steamID.getSteamProfileLink() {
+					
+					lastEmbed.Description += "\n" + message
+					lastMultilineChatMessage, _ = session.ChannelMessageEditEmbed(server.ChannelID, lastMessageID, lastEmbed)
+					return
+				}
+			}
 			embed := &discordgo.MessageEmbed{
 				Description: message,
 				Color: teamNumber.getColor(),
@@ -89,7 +115,7 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 					IconURL: steamID.getAvatar(),
 				},
 			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+			lastMultilineChatMessage, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 		
 		case "inline": fallthrough
 		case "oneline":
@@ -100,7 +126,7 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 					IconURL: steamID.getAvatar(),
 				},
 			}
-			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+			_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 		
 		case "text":
 			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextChatMessage(server.Name, username, teamNumber, message))
@@ -129,7 +155,7 @@ func forwardPlayerEventToDiscord(serverName string, messagetype MessageType, use
 						IconURL: steamID.getAvatar(),
 					},
 				}
-				 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+				_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 			
 			case "text":
 				_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, messagetype, username, message))
@@ -153,7 +179,7 @@ func forwardGameStatusToDiscord(serverName string, messagetype MessageType, mess
 						IconURL: Config.Servers[serverName].ServerIconUrl,
 					},
 				}
-				 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+				_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 			
 			case "text":
 				_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
