@@ -44,33 +44,33 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	
 	// handle the incoming request
 	switch messageType := request.PostFormValue("type"); messageType {
-		case "init" : // nothing to do, just keep the connection
-		case "chat" :
+		case "init": // nothing to do, just keep the connection
+		case "chat":
 			player := request.PostFormValue("player")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			teamNumber, _ := strconv.Atoi(request.PostFormValue("teamnumber"))
 			message := request.PostFormValue("message")
 			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), TeamNumber(teamNumber), message)
 			
-		case "playerjoin" : fallthrough
-		case "playerleave" : 
+		case "playerjoin": fallthrough
+		case "playerleave": 
 			player := request.PostFormValue("player")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			message := request.PostFormValue("message")
 			forwardPlayerEventToDiscord(serverName, MessageType(messageType), player, SteamID3(steamid), message)
 			
-		case "status" : fallthrough
-		case "adminprint" :
+		case "status": fallthrough
+		case "adminprint":
 			message := request.PostFormValue("message")
 			forwardGameStatusToDiscord(serverName, MessageType(messageType), message)
 			
-		default : return
+		default: return
 	}
 	
 	// build a response
 	for {
 		select {
-		case cmd := <-server.Outbound :
+		case cmd := <-server.Outbound:
 			server.TimeoutReset <- 0
 			js, err := json.Marshal(cmd)
 			if err != nil {
@@ -80,7 +80,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			w.Write(js)
 			return
 			
-		default :
+		default:
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			if thisThreadNummer != server.ActiveThread {
 				return

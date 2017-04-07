@@ -14,12 +14,12 @@ var DefaultMessageColor int = 75*256*256 + 78*256 + 82
 func (messagetype MessageType) getColor() int {
 	msgConfig := Config.Messagestyles.Rich
 	switch messagetype {
-		case "chat" :        return Config.getColor(msgConfig.ChatMessageColor, DefaultMessageColor)
-		case "playerjoin" :  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
-		case "playerleave" : return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
-		case "status" :      return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
-		case "adminprint" :  return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
-		default :            return DefaultMessageColor
+		case "chat":        return Config.getColor(msgConfig.ChatMessageColor, DefaultMessageColor)
+		case "playerjoin":  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
+		case "playerleave": return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
+		case "status":      return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
+		case "adminprint":  return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
+		default:            return DefaultMessageColor
 	}
 }
 
@@ -28,10 +28,10 @@ func (teamNumber TeamNumber) getColor() int {
 	msgConfig := Config.Messagestyles.Rich
 	switch teamNumber {
 		default: fallthrough
-		case 0 : return Config.getColor(msgConfig.ChatMessageReadyRoomColor, DefaultMessageColor)
-		case 1 : return Config.getColor(msgConfig.ChatMessageMarineColor, DefaultMessageColor)
-		case 2 : return Config.getColor(msgConfig.ChatMessageAlienColor, DefaultMessageColor)
-		case 3 : return Config.getColor(msgConfig.ChatMessageSpectatorColor, DefaultMessageColor)
+		case 0: return Config.getColor(msgConfig.ChatMessageReadyRoomColor, DefaultMessageColor)
+		case 1: return Config.getColor(msgConfig.ChatMessageMarineColor, DefaultMessageColor)
+		case 2: return Config.getColor(msgConfig.ChatMessageAlienColor, DefaultMessageColor)
+		case 3: return Config.getColor(msgConfig.ChatMessageSpectatorColor, DefaultMessageColor)
 	}
 }
 
