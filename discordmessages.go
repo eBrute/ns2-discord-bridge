@@ -77,7 +77,7 @@ func buildTextPlayerEvent(serverName, cmdType, username, message string) string 
 }
 
 
-func forwardChatMessageToDiscord(serverName string, username string, steamID3 int32, teamNumber int, message string) {
+func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber int, message string) {
 	if server, ok := Servers[serverName]; ok {
 		
 		switch Config.Discord.MessageStyle {
@@ -87,9 +87,9 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID3 in
 				Description: message,
 				Color: getTeamColorForChatMessage(teamNumber),
 				Author: &discordgo.MessageEmbedAuthor{
-					URL: getSteamProfileLinkForSteamID3(steamID3),
+					URL: getSteamProfileLinkForSteamID(steamID),
 					Name: username,
-					IconURL: getAvatarForSteamID3(steamID3),
+					IconURL: getAvatarForSteamID(steamID),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
@@ -100,7 +100,7 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID3 in
 				Color: getTeamColorForChatMessage(teamNumber),
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: username +": " + message,
-					IconURL: getAvatarForSteamID3(steamID3),
+					IconURL: getAvatarForSteamID(steamID),
 				},
 			}
 			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
@@ -112,7 +112,7 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID3 in
 }
 
 
-func forwardPlayerEventToDiscord(serverName string, cmdType string, username string, steamID3 int32, message string) {
+func forwardPlayerEventToDiscord(serverName string, cmdType string, username string, steamID SteamID3, message string) {
 	if server, ok := Servers[serverName]; ok {
 		eventText := ""
 		switch cmdType {
@@ -129,7 +129,7 @@ func forwardPlayerEventToDiscord(serverName string, cmdType string, username str
     				Color: getColorForMessage(cmdType),
     				Footer: &discordgo.MessageEmbedFooter{
     					Text: username + eventText + message,
-    					IconURL: getAvatarForSteamID3(steamID3),
+    					IconURL: getAvatarForSteamID(steamID),
     				},
     			}
     			 _, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)

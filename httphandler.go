@@ -50,13 +50,13 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			teamNumber, _ := strconv.Atoi(request.PostFormValue("teamnumber"))
 			message := request.PostFormValue("message")
-			forwardChatMessageToDiscord(serverName, player, int32(steamid), teamNumber, message)
+			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), teamNumber, message)
 		case "playerjoin" : fallthrough
 		case "playerleave" : 
 			player := request.PostFormValue("player")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
 			message := request.PostFormValue("message")
-			forwardPlayerEventToDiscord(serverName, cmdtype, player, int32(steamid), message)
+			forwardPlayerEventToDiscord(serverName, cmdtype, player, SteamID3(steamid), message)
 		case "status" : fallthrough
 		case "adminprint" :
 			message := request.PostFormValue("message")
