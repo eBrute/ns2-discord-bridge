@@ -65,11 +65,11 @@ func (steamID SteamID64) String() string {
 
 func (steamID SteamID3) getAvatar() string {
     if avatar, ok := AvatarCache[steamID]; ok {
-        if time.Now().Before(avatar.lastUpdated.Add(time.Duration(24) * time.Hour)) {
+        if time.Now().Before( avatar.lastUpdated.Add( time.Duration(24) * time.Hour)) {
             return avatar.url
         }
     }
-    steamProfile, err := steamID.to64().getSteamProfile()
+    steamProfile, err := steamID.getSteamProfile()
     if err == nil {
         AvatarCache[steamID] = &Avatar{
             url : steamProfile.Avatar,
@@ -101,13 +101,13 @@ func getJson(url string, target interface{}) error {
 }
 
 
-func (steamID SteamID64) getSteamProfile() (*SteamPlayer, error) {
+func (steamID SteamID3) getSteamProfile() (*SteamPlayer, error) {
     if steamID == 0 {
         return nil, errors.New("Invalid Steamid")
     }
     
     steamResponse := ISteamUser{}
-    url := "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + Config.Steam.WebApiKey + "&steamids=" + steamID.String()
+    url := "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + Config.Steam.WebApiKey + "&steamids=" + steamID.to64().String()
     if err := getJson(url, &steamResponse); err != nil {
         return nil, err
     }

@@ -19,7 +19,6 @@ func main() {
     for _, server := range serverList {
         go server.clearOutboundChannelOnInactivity()
     }
-
     
 	startDiscordBot() // non-blocking
 	startHTTPServer() // blocking
