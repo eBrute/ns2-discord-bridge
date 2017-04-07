@@ -21,6 +21,11 @@ type ResponseHandler struct{
 }
 
 
+func init() {
+	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
+}
+
+
 func startDiscordBot() {
 	
 	var err error
@@ -36,8 +41,6 @@ func startDiscordBot() {
 		log.Println("error obtaining account details,", err)
 	}
 	botID = user.ID
-
-	commandPattern, _ = regexp.Compile(`^!(\w+)(\s|$)`)
 
 	session.AddHandler(chatEventHandler)
 
