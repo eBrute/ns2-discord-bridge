@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+const version = "v3.0.0"
 var configFile string
 
 // parse command line arguments
@@ -15,6 +16,7 @@ func init() {
 
 
 func main() {
+	log.Println("Version", version)
 	Config.loadConfig(configFile)
 	
 	for serverName, v := range Config.Servers {
