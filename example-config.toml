@@ -1,6 +1,6 @@
 [discord]
 token = "xxxxxx-your-discord-bot-token"
-message_style = "oneline" # options are: "multiline", "oneline", "text"
+message_style = "multiline" # options are: "multiline", "oneline", "text"
 
 [messagestyles]
 	[messagestyles.rich]
