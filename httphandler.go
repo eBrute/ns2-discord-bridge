@@ -21,10 +21,10 @@ func startHTTPServer() {
 func httpHandler(w http.ResponseWriter, request *http.Request) {
 	err := request.ParseForm() 
 	if err != nil {
-	       log.Print(err)
+		log.Print(err)
 	}
 
-	serverName := request.PostFormValue("server")
+	serverName := request.PostFormValue("id")
 	if serverName == "" { // key not present
 		return
 	}
@@ -46,22 +46,22 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	switch messageType := request.PostFormValue("type"); messageType {
 		case "init": // nothing to do, just keep the connection
 		case "chat":
-			player := request.PostFormValue("player")
-			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
-			teamNumber, _ := strconv.Atoi(request.PostFormValue("teamnumber"))
-			message := request.PostFormValue("message")
+			player := request.PostFormValue("plyr")
+			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
+			teamNumber, _ := strconv.Atoi(request.PostFormValue("team"))
+			message := request.PostFormValue("msg")
 			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), TeamNumber(teamNumber), message)
 			
 		case "playerjoin": fallthrough
 		case "playerleave": 
-			player := request.PostFormValue("player")
-			steamid, _ := strconv.ParseInt(request.PostFormValue("steamid"), 10, 32)
-			message := request.PostFormValue("message")
+			player := request.PostFormValue("plyr")
+			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
+			message := request.PostFormValue("msg")
 			forwardPlayerEventToDiscord(serverName, MessageType(messageType), player, SteamID3(steamid), message)
 			
 		case "status": fallthrough
 		case "adminprint":
-			message := request.PostFormValue("message")
+			message := request.PostFormValue("msg")
 			forwardGameStatusToDiscord(serverName, MessageType(messageType), message)
 			
 		default: return

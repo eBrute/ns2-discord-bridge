@@ -14,7 +14,7 @@ var (
 type Command struct {
 	Type    string `json:"type"`
 	User    string `json:"user"`
-	Content string `json:"content"`
+	Message string `json:"msg"`
 }
 
 
@@ -61,7 +61,7 @@ func createChatMessageCommand(username string, m *discordgo.MessageCreate) *Comm
 	return &Command{
 		Type: "chat",
 		User: username,
-		Content: formatDiscordMessage(m),
+		Message: formatDiscordMessage(m),
 	}
 }
 
@@ -70,6 +70,6 @@ func createRconCommand(username string, command string) *Command {
 	return &Command{
 		Type: "rcon",
 		User: username,
-		Content: command,
+		Message: command,
 	}
 }
