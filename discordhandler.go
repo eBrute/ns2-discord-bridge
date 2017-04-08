@@ -173,11 +173,12 @@ func (r *ResponseHandler) sendRconCommand() {
 
 func (r *ResponseHandler) printHelpMessage() {
 	r.respond("```" + `
-!help                            - prints this help
-!commands                        - prints this help
-!link <server>                   - links server to this channel
-!unlink                          - unlinks this channel
-!list                            - prints the server linked to this channel
-!list all                        - prints all linked servers
+!help                       - prints this help
+!commands                   - prints this help
+!link <server>              - links server to this channel
+!unlink                     - unlinks this channel
+!list                       - prints the server linked to this channel
+!list all                   - prints all linked servers
+!rcon <console commands>    - executes console commands directly on the linked server
 ` + "```")
 }
