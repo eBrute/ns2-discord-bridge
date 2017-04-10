@@ -136,7 +136,6 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 			}
 			lastMultilineChatMessage, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 		
-		case "inline": fallthrough
 		case "oneline":
 			embed := &discordgo.MessageEmbed{
 				Color: teamNumber.getColor(),
@@ -165,7 +164,6 @@ func forwardPlayerEventToDiscord(serverName string, messagetype MessageType, use
 		switch Config.Discord.MessageStyle {
 			default: fallthrough
 			case "multiline": fallthrough
-			case "inline": fallthrough
 			case "oneline":
 				embed := &discordgo.MessageEmbed{
 					Color: messagetype.getColor(),
@@ -189,7 +187,6 @@ func forwardGameStatusToDiscord(serverName string, messagetype MessageType, mess
 		switch Config.Discord.MessageStyle {
 			default: fallthrough
 			case "multiline": fallthrough
-			case "inline": fallthrough
 			case "oneline":
 				embed := &discordgo.MessageEmbed{
 					Color: messagetype.getColor(),
