@@ -49,10 +49,28 @@ func channelTranslator(mentions []*discordgo.User) (func(string) string) {
 }
 
 
+func getUnicodeTranslator() (*strings.Replacer) {
+	return strings.NewReplacer(
+		"😃", ":)",
+		"😄", ":D",
+		"😦", ":(",
+		"😐", ":|",
+		"😛", ":P",
+		"😉", ";)",
+		"😭", ";(",
+		"😠", ">:(",
+		"😢", ":,(",
+		"❤", "<3",
+		"💔", "</3",
+	)
+}
+
+
 // formats a discord message so it looks good in-game
 func formatDiscordMessage(m *discordgo.MessageCreate) string {
 	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
 	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions) )
+	message = getUnicodeTranslator().Replace(message)
 	return message
 }
 
