@@ -49,7 +49,7 @@ func channelTranslator(mentions []*discordgo.User) (func(string) string) {
 }
 
 
-func getUnicodeTranslator() (*strings.Replacer) {
+func getUnicodeToTextTranslator() *strings.Replacer {
 	return strings.NewReplacer(
 		"😃", ":)",
 		"😄", ":D",
@@ -70,7 +70,7 @@ func getUnicodeTranslator() (*strings.Replacer) {
 func formatDiscordMessage(m *discordgo.MessageCreate) string {
 	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions) )
 	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions) )
-	message = getUnicodeTranslator().Replace(message)
+	message = getUnicodeToTextTranslator().Replace(message)
 	return message
 }
 

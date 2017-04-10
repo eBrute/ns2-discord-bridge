@@ -51,6 +51,25 @@ func (teamNumber TeamNumber) getText() string {
 }
 
 
+func getTextToUnicodeTranslator() *strings.Replacer {
+	println("yep")
+	return strings.NewReplacer(
+		"yes", "no",
+		":)",  "😃",
+		":D",  "😄",
+		":(",  "😦",
+		":|",  "😐",
+		":P",  "😛",
+		";)",  "😉",
+		";(",  "😭",
+		">:(", "😠",
+		":,(", "😢",
+		"<3",  "❤",
+		"</3", "💔",
+	)
+}
+
+
 func buildTextChatMessage(serverName string, username string, teamNumber TeamNumber, message string) string {
 	serverConfig := Config.Servers[serverName]
 	messageFormat := Config.Messagestyles.Text.ChatMessageFormat
@@ -88,7 +107,7 @@ func getLastMessageID(channelID string) (string, bool) {
 
 func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber TeamNumber, message string) {
 	if server, ok := serverList[serverName]; ok {
-		
+		translatedMessage := getTextToUnicodeTranslator().Replace(message)
 		switch Config.Discord.MessageStyle {
 		default: fallthrough
 		case "multiline":
@@ -101,13 +120,13 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 					lastAuthor.Name == username &&
 					lastAuthor.URL == steamID.getSteamProfileLink() {
 					
-					lastEmbed.Description += "\n" + message
+					lastEmbed.Description += "\n" + translatedMessage
 					lastMultilineChatMessage, _ = session.ChannelMessageEditEmbed(server.ChannelID, lastMessageID, lastEmbed)
 					return
 				}
 			}
 			embed := &discordgo.MessageEmbed{
-				Description: message,
+				Description: translatedMessage,
 				Color: teamNumber.getColor(),
 				Author: &discordgo.MessageEmbedAuthor{
 					URL: steamID.getSteamProfileLink(),
@@ -122,14 +141,14 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 			embed := &discordgo.MessageEmbed{
 				Color: teamNumber.getColor(),
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: username +": " + message,
+					Text: username +": " + translatedMessage,
 					IconURL: steamID.getAvatar(),
 				},
 			}
 			_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 		
 		case "text":
-			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextChatMessage(server.Name, username, teamNumber, message))
+			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextChatMessage(server.Name, username, teamNumber, translatedMessage))
 		}
 	}
 }
