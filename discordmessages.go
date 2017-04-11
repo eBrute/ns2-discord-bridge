@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 	"strconv"
+	"math"
 	"time"
 	"github.com/bwmarrin/discordgo"
 )
@@ -13,6 +14,32 @@ type MessageType struct{
 	SubType string
 }
 
+type ServerInfo struct{
+	ServerIp string `json:"serverIp"`
+	ServerPort int `json:"serverPort"`
+	ServerName string `json:"serverName"`
+	Version int `json:"version"`
+	Mods []ServerInfoModInfo `json:"mods"`
+	State string `json:"state"`
+	Map string `json:"map"`
+	GameTime float64 `json:"gameTime"`
+	NumPlayers int `json:"numPlayers"`
+	MaxPlayers int `json:"maxPlayers"`
+	NumRookies int `json:"numRookies"`
+	Teams map[string]ServerInfoTeamInfo `json:"teams"`
+}
+
+type ServerInfoTeamInfo struct{
+	TeamNumber int `json:"teamNumber"`
+	NumPlayers int `json:"numPlayers"`
+	NumRookies int `json:"numRookies"`
+	Players []string `json:"players"`
+}
+
+type ServerInfoModInfo struct{
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
 
 var (
 	DefaultMessageColor int = 75*256*256 + 78*256 + 82
@@ -30,6 +57,8 @@ func (messagetype MessageType) getColor() int {
 				case "leave": return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
 				default:      return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
 			}
+		case "info":        fallthrough
+		case "status":      fallthrough
 		case "adminprint":  return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
 		default:            return DefaultMessageColor
 	}
@@ -61,7 +90,6 @@ func (teamNumber TeamNumber) getText() string {
 
 
 func getTextToUnicodeTranslator() *strings.Replacer {
-	println("yep")
 	return strings.NewReplacer(
 		"yes", "no",
 		":)",  "😃",
@@ -234,5 +262,94 @@ func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, m
 			case "text":
 				_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
 		}
+	}
+}
+
+
+func forwardServerStatusToDiscord(serverName string, messagetype MessageType, info ServerInfo) {
+	if server, ok := serverList[serverName]; ok {
+		timestamp := time.Now().UTC().Format("2006-01-02T15:04:05")
+		gameTimeSec, _ := math.Modf(info.GameTime)
+		description := ""
+		description += "**Map:** " + info.Map
+		description += "\n**State:** "+ info.State + " ("+ strconv.Itoa(int(gameTimeSec/60)) + "m " + strconv.Itoa(int(gameTimeSec) % 60) + "s)"
+		description += "\n**Players:** " + strconv.Itoa(info.NumPlayers) + "/" + strconv.Itoa(info.MaxPlayers)
+		
+		// if messagetype.SubType == "status" {
+			// description += "\n​\t​\t​\t​\t​\t`Marines ______` "+ strconv.Itoa(info.Teams["1"].NumPlayers) + " Players"
+			// description += "\n​\t​\t​\t​\t​\t`Aliens________` "+ strconv.Itoa(info.Teams["2"].NumPlayers) + " Players"
+			// description += "\n​\t​\t​\t​\t​\t`ReadyRoom ____` "+ strconv.Itoa(info.Teams["0"].NumPlayers) + " Players"
+			// description += "\n​\t​\t​\t​\t​\t`Spectators____`"+ strconv.Itoa(info.Teams["3"].NumPlayers) + " Players"
+		// }
+		
+		if messagetype.SubType == "info" {
+			description += "\n**Rookies:** "+ strconv.Itoa(info.NumRookies)
+			description += "\n**Version:** "+ strconv.Itoa(info.Version)
+		}
+		
+		fields := make([]*discordgo.MessageEmbedField, 0)
+
+		if messagetype.SubType == "info" && len(info.Teams) == 4 {
+			marineTeam := &discordgo.MessageEmbedField{
+			    Name: "Marines (" + strconv.Itoa(info.Teams["1"].NumPlayers) + " Players)",
+			    Value: "​" + strings.Join(info.Teams["1"].Players, "\n"),
+			    Inline: true,
+			}
+			fields = append(fields, marineTeam)
+			
+			alienTeam := &discordgo.MessageEmbedField{
+			    Name: "Aliens (" + strconv.Itoa(info.Teams["2"].NumPlayers) + " Players)",
+			    Value: "​" + strings.Join(info.Teams["2"].Players, "\n"),
+			    Inline: true,
+			}
+			fields = append(fields, alienTeam)
+			
+			lineBreak := &discordgo.MessageEmbedField{
+				Name: "​",
+				Value: "​",
+				Inline: false,
+			}
+			fields = append(fields, lineBreak)
+			
+			rrTeam := &discordgo.MessageEmbedField{
+			    Name: "ReadyRoom (" + strconv.Itoa(info.Teams["0"].NumPlayers) + " Players)",
+			    Value: "​" + strings.Join(info.Teams["0"].Players, "\n"),
+			    Inline: true,
+			}
+			fields = append(fields, rrTeam)
+			
+			specTeam := &discordgo.MessageEmbedField{
+			    Name: "Spectators (" + strconv.Itoa(info.Teams["3"].NumPlayers) + " Players)",
+			    Value: "​" + strings.Join(info.Teams["3"].Players, "\n"),
+			    Inline: true,
+			}
+			fields = append(fields, specTeam)
+			
+			mods := make([]string, 0)
+			for _, v := range info.Mods {
+				mods = append(mods, v.Name)
+			}
+			modsField := &discordgo.MessageEmbedField{
+				Name: "Mods",
+				Value: "​" + strings.Join(mods[:], "\n"),
+				Inline: false,
+			}
+			fields = append(fields, modsField)
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Color: messagetype.getColor(),
+			Author: &discordgo.MessageEmbedAuthor{
+				Name: info.ServerName,
+				IconURL: Config.Servers[serverName].ServerIconUrl,
+			},
+			Description: description,
+			Fields: fields,
+			Timestamp: timestamp,
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: info.ServerIp + ":" + strconv.Itoa(info.ServerPort),
+			},
+		}
+		_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 	}
 }

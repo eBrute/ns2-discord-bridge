@@ -84,6 +84,22 @@ func createChatMessageCommand(username string, m *discordgo.MessageCreate) *Comm
 }
 
 
+func createServerStatusCommand() *Command {
+	return &Command{
+		Type: "info",
+		Message: "status",
+	}
+}
+
+
+func createServerInfoCommand() *Command {
+	return &Command{
+		Type: "info",
+		Message: "info",
+	}
+}
+
+
 func createRconCommand(username string, command string) *Command {
 	return &Command{
 		Type: "rcon",

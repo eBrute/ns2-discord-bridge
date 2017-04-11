@@ -98,6 +98,8 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "list": responseHandler.listChannel()
 		case "unlink": responseHandler.unlinkChannel()
 		case "rcon": responseHandler.sendRconCommand()
+		case "info":  responseHandler.requestServerInfo()
+		case "status": responseHandler.requestServerStatus()
 		default : fallthrough
 		case "commands": fallthrough
 		case "help": responseHandler.printHelpMessage()
@@ -154,6 +156,30 @@ func (r *ResponseHandler) listChannel() {
 }
 
 
+func (r *ResponseHandler) requestServerStatus() {
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	if !isServerLinked {
+		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+
+	server.TimeoutSet <- 60 // sec
+	server.Outbound <- createServerStatusCommand()
+}
+
+
+func (r *ResponseHandler) requestServerInfo() {
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	if !isServerLinked {
+		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+
+	server.TimeoutSet <- 60 // sec
+	server.Outbound <- createServerInfoCommand()
+}
+
+
 func (r *ResponseHandler) sendRconCommand() {
 	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
 	if !isServerLinked {
@@ -179,6 +205,8 @@ func (r *ResponseHandler) printHelpMessage() {
 !unlink                     - unlinks this channel
 !list                       - prints the server linked to this channel
 !list all                   - prints all linked servers
+!status                     - prints a short server status
+!info                       - prints a long server info
 !rcon <console commands>    - executes console commands directly on the linked server
 ` + "```")
 }

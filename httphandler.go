@@ -68,6 +68,16 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			message := request.PostFormValue("msg")
 			forwardStatusMessageToDiscord(serverName, messageType, message, playerCount)
 			
+		case "info":
+			serverInfo := ServerInfo{}
+			message := request.PostFormValue("msg")
+			println(message)
+			err := json.Unmarshal([]byte(message), &serverInfo)
+			if err != nil {
+				println(err.Error())
+			}
+			forwardServerStatusToDiscord(serverName, messageType, serverInfo)
+			
 		default: return
 	}
 	
