@@ -30,7 +30,8 @@ web_api_key = "xxxxxx-your-steam-web-api-key"
 
 [servers.example1]
 channelID = "1645231543324534623"
-admins = ["Brute#9034", "Wooza#2865", "Las#0029", "85216375989862"]
+admins = ["Brute#9034", "Wooza#2865", "Las#0029", "125786284395462656"]
+muted = ["Sandyclawz#1347"]
 server_chat_message_prefix = ""
 server_status_message_prefix = "<:apheriox:298852163759898624> "
 server_icon_url = "https://cdn.discordapp.com/icons/164863821276512267/9a7f55887cb50e053e1b7b14b86af199.png"

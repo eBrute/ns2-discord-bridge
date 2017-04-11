@@ -49,6 +49,7 @@ type MessageStyleTextConfig struct {
 type ServerConfig struct {
 	ChannelID string
 	Admins []string
+	Muted []string
 	ServerChatMessagePrefix string
 	ServerStatusMessagePrefix string
 	ServerIconUrl string

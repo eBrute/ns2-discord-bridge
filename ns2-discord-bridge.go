@@ -24,6 +24,7 @@ func main() {
 			Name : serverName,
 			ChannelID : v.ChannelID,
 			Outbound : make(chan *Command),
+			Muted : v.Muted,
 			TimeoutSet : make(chan int),
 			TimeoutReset : make(chan int),
 		}

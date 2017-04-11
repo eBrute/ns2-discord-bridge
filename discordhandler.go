@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"strings"
+	"strconv"
 	"regexp"
 	"github.com/bwmarrin/discordgo"
 )
@@ -78,11 +79,16 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
 	if len(commandMatches) == 0 { // this is a regular message
-		server, ok := serverList.getServerLinkedToChannel(m.ChannelID)
-		if !ok {
+		server, isServerLinked := serverList.getServerLinkedToChannel(m.ChannelID)
+		if !isServerLinked {
 			// this channel isnt linked to any server, so just do nothing
 			return
 		}
+		
+		if server.isMuted(author) {
+			return
+		}
+		
 		server.TimeoutSet <- 60 // sec
 		server.Outbound <- createChatMessageCommand(author.Username, m)
 		return
@@ -97,6 +103,8 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "link": responseHandler.linkChannel()
 		case "list": responseHandler.listChannel()
 		case "unlink": responseHandler.unlinkChannel()
+		case "mute": responseHandler.muteUser()
+		case "unmute": responseHandler.unmuteUser()
 		case "rcon": responseHandler.sendRconCommand()
 		case "info":  responseHandler.requestServerInfo()
 		case "status": responseHandler.requestServerStatus()
@@ -156,6 +164,55 @@ func (r *ResponseHandler) listChannel() {
 }
 
 
+func (r *ResponseHandler) muteUser() {
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	if !isServerLinked {
+		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+
+	if !server.isAdmin(r.m.Author) {
+		r.respond("You are not registered as an admin for server '" + server.Name + "'")
+		return
+	}
+	
+	count := 0
+	for _, mention := range r.m.Mentions {
+		if !server.isMuted(mention) {
+			server.Muted = append(server.Muted, mention.ID)
+			count++
+		}
+	}
+	r.respond("Muted " + strconv.Itoa(count) + " users")
+}
+
+
+func (r *ResponseHandler) unmuteUser() {
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	if !isServerLinked {
+		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		return
+	}
+
+	if !server.isAdmin(r.m.Author) {
+		r.respond("You are not registered as an admin for server '" + server.Name + "'")
+		return
+	}
+
+	count := 0
+	for _, mentionedUser := range r.m.Mentions {
+		for i, mutedUser := range server.Muted {
+			if isSameUser(mentionedUser, mutedUser) {
+				server.Muted = append(server.Muted[:i], server.Muted[i+1:]...)
+				count++
+				log.Println("Muted user", "'" + mentionedUser.Username + "#" + mentionedUser.Discriminator + "'", "id:", mentionedUser.ID)
+			}
+		}
+	}
+	r.respond("Unmuted " + strconv.Itoa(count) + " user(s)")
+}
+
+
 func (r *ResponseHandler) requestServerStatus() {
 	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
 	if !isServerLinked {
@@ -199,14 +256,18 @@ func (r *ResponseHandler) sendRconCommand() {
 
 func (r *ResponseHandler) printHelpMessage() {
 	r.respond("```" + `
-!help                       - prints this help
-!commands                   - prints this help
-!link <server>              - links server to this channel
-!unlink                     - unlinks this channel
-!list                       - prints the server linked to this channel
-!list all                   - prints all linked servers
-!status                     - prints a short server status
-!info                       - prints a long server info
-!rcon <console commands>    - executes console commands directly on the linked server
+!help                    - prints this help
+!commands                - prints this help
+!list                    - prints the server linked to this channel
+!list all                - prints all linked servers
+!status                  - prints a short server status
+!info                    - prints a long server info
+
+admin commands:
+!link <server>           - links server to this channel
+!unlink                  - unlinks this channel
+!mute @discorduser(s)    - dont forward messages from user(s) to the server
+!unmute @discorduser(s)  - remove user(s) from being muted
+!rcon <console commands> - executes console commands directly on the linked server
 ` + "```")
 }
