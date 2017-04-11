@@ -2,11 +2,17 @@ package main
 
 import (
 	"strings"
+	"strconv"
+	"time"
 	"github.com/bwmarrin/discordgo"
 )
 
 type TeamNumber int
-type MessageType string
+type MessageType struct{
+	GroupType string
+	SubType string
+}
+
 
 var (
 	DefaultMessageColor int = 75*256*256 + 78*256 + 82
@@ -16,11 +22,14 @@ var (
 
 func (messagetype MessageType) getColor() int {
 	msgConfig := Config.Messagestyles.Rich
-	switch messagetype {
+	switch messagetype.GroupType {
 		case "chat":        return Config.getColor(msgConfig.ChatMessageColor, DefaultMessageColor)
-		case "playerjoin":  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
-		case "playerleave": return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
-		case "status":      return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
+		case "player":  
+			switch messagetype.SubType {
+				case "join":  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
+				case "leave": return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
+				default:      return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
+			}
 		case "adminprint":  return Config.getColor(msgConfig.StatusColor, DefaultMessageColor)
 		default:            return DefaultMessageColor
 	}
@@ -85,9 +94,9 @@ func buildTextPlayerEvent(serverName string, messagetype MessageType, username s
 	serverConfig := Config.Servers[serverName]
 	messageConfig := Config.Messagestyles.Text
 	messageFormat := "%s %p %m"
-	switch messagetype {
-		case "playerjoin": messageFormat = messageConfig.PlayerJoinFormat
-		case "playerleave": messageFormat = messageConfig.PlayerLeaveFormat
+	switch messagetype.SubType {
+		case "join": messageFormat = messageConfig.PlayerJoinFormat
+		case "leave": messageFormat = messageConfig.PlayerLeaveFormat
 	}
 	serverSpecificString := serverConfig.ServerChatMessagePrefix
 	replacer := strings.NewReplacer("%p", username, "%m", message, "%s", serverSpecificString)
@@ -153,12 +162,23 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 }
 
 
-func forwardPlayerEventToDiscord(serverName string, messagetype MessageType, username string, steamID SteamID3, message string) {
+func forwardPlayerEventToDiscord(serverName string, messagetype MessageType, username string, steamID SteamID3, playerCount string) {
 	if server, ok := serverList[serverName]; ok {
+		
+		timestamp := ""
+		switch messagetype.SubType + strings.Split(playerCount, "/")[0] {
+			case "join1":	fallthrough
+			case "leave0":	timestamp = time.Now().UTC().Format("2006-01-02T15:04:05")
+		}
+		
+		if playerCount != "" {
+			playerCount = " (" + playerCount + ")"
+		}
+		
 		eventText := ""
-		switch messagetype {
-			case "playerjoin": eventText = " joined "
-			case "playerleave": eventText = " left "
+		switch messagetype.SubType {
+			case "join": eventText = username + " joined" + playerCount
+			case "leave": eventText = username + " left" + playerCount
 		}
 		
 		switch Config.Discord.MessageStyle {
@@ -166,29 +186,43 @@ func forwardPlayerEventToDiscord(serverName string, messagetype MessageType, use
 			case "multiline": fallthrough
 			case "oneline":
 				embed := &discordgo.MessageEmbed{
+					Timestamp: timestamp,
 					Color: messagetype.getColor(),
 					Footer: &discordgo.MessageEmbedFooter{
-						Text: username + eventText + message,
+						Text: eventText,
 						IconURL: steamID.getAvatar(),
 					},
 				}
 				_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 			
 			case "text":
-				_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, messagetype, username, message))
+				_, _ = session.ChannelMessageSend(server.ChannelID, buildTextPlayerEvent(server.Name, messagetype, username, playerCount))
 		}
 	}
 }
 
 
-func forwardGameStatusToDiscord(serverName string, messagetype MessageType, message string) {
+func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, message string, playerCount string) {
 	if server, ok := serverList[serverName]; ok {
+		
+		if playerCount != "" {
+			message += " (" + playerCount + ")"
+		}
 		
 		switch Config.Discord.MessageStyle {
 			default: fallthrough
 			case "multiline": fallthrough
 			case "oneline":
+				timestamp := ""
+				switch messagetype.SubType {
+					case "roundstart": fallthrough
+					case "marinewin": fallthrough
+					case "alienwin": fallthrough
+					case "draw": 
+						timestamp = time.Now().UTC().Format("2006-01-02T15:04:05")
+				}
 				embed := &discordgo.MessageEmbed{
+					Timestamp: timestamp,
 					Color: messagetype.getColor(),
 					Footer: &discordgo.MessageEmbedFooter{
 						Text: message,

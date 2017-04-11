@@ -43,8 +43,12 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 	server.Mux.Unlock()
 	
 	// handle the incoming request
-	switch messageType := request.PostFormValue("type"); messageType {
+	groupType := request.PostFormValue("type")
+	subType := request.PostFormValue("sub")
+	messageType := MessageType{groupType, subType}
+	switch messageType.GroupType {
 		case "init": // nothing to do, just keep the connection
+		
 		case "chat":
 			player := request.PostFormValue("plyr")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
@@ -52,17 +56,17 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			message := request.PostFormValue("msg")
 			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), TeamNumber(teamNumber), message)
 			
-		case "playerjoin": fallthrough
-		case "playerleave": 
+		case "player": 
 			player := request.PostFormValue("plyr")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
-			message := request.PostFormValue("msg")
-			forwardPlayerEventToDiscord(serverName, MessageType(messageType), player, SteamID3(steamid), message)
+			playerCount := request.PostFormValue("pc")
+			forwardPlayerEventToDiscord(serverName, messageType, player, SteamID3(steamid), playerCount)
 			
 		case "status": fallthrough
 		case "adminprint":
+			playerCount := request.PostFormValue("pc")
 			message := request.PostFormValue("msg")
-			forwardGameStatusToDiscord(serverName, MessageType(messageType), message)
+			forwardStatusMessageToDiscord(serverName, messageType, message, playerCount)
 			
 		default: return
 	}
