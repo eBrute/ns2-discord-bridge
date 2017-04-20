@@ -48,8 +48,9 @@ type MessageStyleTextConfig struct {
 
 type ServerConfig struct {
 	ChannelID string
-	Admins []string
-	Muted []string
+	Admins DiscordIdentityList
+	Muted DiscordIdentityList
+	KeywordNotifications []DiscordIdentityList
 	ServerChatMessagePrefix string
 	ServerStatusMessagePrefix string
 	ServerIconUrl string

@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 	"strconv"
+	"errors"
 	"regexp"
 	"github.com/bwmarrin/discordgo"
 )
@@ -16,9 +17,11 @@ var (
 
 type ResponseHandler struct{
 	respond func(string)
-	s *discordgo.Session
-	m *discordgo.MessageCreate
-	message []string
+	session *discordgo.Session
+	message *discordgo.MessageCreate
+	guild *discordgo.Guild
+	author *discordgo.Member
+	messageContent []string
 }
 
 
@@ -57,14 +60,34 @@ func startDiscordBot() {
 
 
 func createResponseHandler(s *discordgo.Session, m *discordgo.MessageCreate, message []string) *ResponseHandler {
+	guild, err := getGuildForChannel(s, m.ChannelID)
+	if err != nil {
+		panic("Cannot find guild. Permission problem?")
+	}
+	author, _ := s.State.Member(guild.ID, m.Author.ID)
 	return &ResponseHandler{
 		func(text string) {
 			_, _ = s.ChannelMessageSend(m.ChannelID, text)
 		},
 		s,
 		m,
+		guild,
+		author,
 		message,
 	}
+}
+
+
+func getGuildForChannel(s *discordgo.Session, channelID string) (*discordgo.Guild, error) {
+	for _, guild := range s.State.Guilds {
+		channels, _ := s.GuildChannels(guild.ID)
+		for _, channel := range channels {
+			if channel.ID == channelID {
+				return guild, nil
+			}
+		}
+	}
+	return nil, errors.New("No guild for channel '" + channelID + "'")
 }
 
 
@@ -76,6 +99,9 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	
+	guild, _ := getGuildForChannel(s, m.ChannelID)
+	authorMember, _ := s.State.Member(guild.ID, author.ID)
+	
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
 	if len(commandMatches) == 0 { // this is a regular message
@@ -85,7 +111,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		
-		if server.isMuted(author) {
+		if server.isMuted(authorMember) {
 			return
 		}
 		
@@ -100,6 +126,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
+		case "test": responseHandler.testChannel()
 		case "link": responseHandler.linkChannel()
 		case "list": responseHandler.listChannel()
 		case "unlink": responseHandler.unlinkChannel()
@@ -115,21 +142,40 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 
+func (r *ResponseHandler) testChannel() {
+	// server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
+	// if !isServerLinked {
+	// 	return
+	// }
+	// response := ""
+	// println(server.Name)
+	// println(len(Config.Servers[server.Name].KeywordNotifications))
+	// for _, mention := range Config.Servers[server.Name].AdminMentions {
+	// 	if role, err := mention.getRole(r.guild); err == nil {
+	// 		response += "<@&" + role.ID + "> "
+	// 	} else if user, err := mention.getUser(r.guild); err == nil {
+	// 		response += "<@!" + user.ID + "> "
+	// 	}
+	// }
+	// r.respond(response)
+}
+
+
 func (r *ResponseHandler) linkChannel() {
-	if len(r.message) < 1 {
+	if len(r.messageContent) < 1 {
 		r.respond("You need to specify a server")
 		return
 	}
-	server, ok := serverList.getServerByName(r.message[0])
+	server, ok := serverList.getServerByName(r.messageContent[0])
 	if !ok {
-		r.respond("The server '" + r.message[0] + "' is not configured")
+		r.respond("The server '" + r.messageContent[0] + "' is not configured")
 		return
 	}
-	if !server.isAdmin(r.m.Author) {
+	if !server.isAdmin(r.author) {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
-	if err := server.linkChannelID(r.m.ChannelID); err != nil {
+	if err := server.linkChannelID(r.message.ChannelID); err != nil {
 		r.respond(err.Error())
 	} else {
 		r.respond("This channel is now linked to '" + server.Name + "'")
@@ -138,13 +184,13 @@ func (r *ResponseHandler) linkChannel() {
 
 
 func (r *ResponseHandler) unlinkChannel() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
 	if !isServerLinked {
 		r.respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
 	}
 
-	if !server.isAdmin(r.m.Author) {
+	if !server.isAdmin(r.author) {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
@@ -154,10 +200,10 @@ func (r *ResponseHandler) unlinkChannel() {
 
 
 func (r *ResponseHandler) listChannel() {
-	listAll := len(r.message) > 0 && r.message[0] == "all"
+	listAll := len(r.messageContent) > 0 && r.messageContent[0] == "all"
 	for _, server := range serverList {
 		id := server.ChannelID
-		if listAll || id == r.m.ChannelID {
+		if listAll || id == r.message.ChannelID {
 			r.respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
 		}
 	}
@@ -165,21 +211,22 @@ func (r *ResponseHandler) listChannel() {
 
 
 func (r *ResponseHandler) muteUser() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
 	if !isServerLinked {
 		r.respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
 	}
 
-	if !server.isAdmin(r.m.Author) {
+	if !server.isAdmin(r.author) {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
 	
 	count := 0
-	for _, mention := range r.m.Mentions {
-		if !server.isMuted(mention) {
-			server.Muted = append(server.Muted, mention.ID)
+	for _, mention := range r.message.Mentions {
+		mentionedMember, err := r.session.State.Member(r.guild.ID, mention.ID)
+		if err == nil && !server.isMuted(mentionedMember) {
+			server.Muted = append(server.Muted, DiscordIdentity(mention.ID))
 			count++
 		}
 	}
@@ -188,21 +235,21 @@ func (r *ResponseHandler) muteUser() {
 
 
 func (r *ResponseHandler) unmuteUser() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
 	if !isServerLinked {
 		r.respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
 	}
 
-	if !server.isAdmin(r.m.Author) {
+	if !server.isAdmin(r.author) {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
 
 	count := 0
-	for _, mentionedUser := range r.m.Mentions {
+	for _, mentionedUser := range r.message.Mentions {
 		for i, mutedUser := range server.Muted {
-			if isSameUser(mentionedUser, mutedUser) {
+			if mutedUser.matchesUser(mentionedUser) {
 				server.Muted = append(server.Muted[:i], server.Muted[i+1:]...)
 				count++
 				log.Println("Muted user", "'" + mentionedUser.Username + "#" + mentionedUser.Discriminator + "'", "id:", mentionedUser.ID)
@@ -214,7 +261,7 @@ func (r *ResponseHandler) unmuteUser() {
 
 
 func (r *ResponseHandler) requestServerStatus() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
 	if !isServerLinked {
 		r.respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
@@ -226,7 +273,7 @@ func (r *ResponseHandler) requestServerStatus() {
 
 
 func (r *ResponseHandler) requestServerInfo() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
 	if !isServerLinked {
 		r.respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
@@ -238,19 +285,19 @@ func (r *ResponseHandler) requestServerInfo() {
 
 
 func (r *ResponseHandler) sendRconCommand() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.m.ChannelID)
+	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
 	if !isServerLinked {
 		r.respond("Channel is not linked to any server. Use !link <servername> first.")
 		return
 	}
 
-	if !server.isAdmin(r.m.Author) {
+	if !server.isAdmin(r.author) {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
-	command := strings.Join(r.message[:], " ")
+	command := strings.Join(r.messageContent[:], " ")
 	server.TimeoutSet <- 60 // sec
-	server.Outbound <- createRconCommand(r.m.Author.Username, command)
+	server.Outbound <- createRconCommand(r.message.Author.Username, command)
 }
 
 

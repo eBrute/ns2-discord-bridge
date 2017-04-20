@@ -14,8 +14,8 @@ var serverList ServerList
 type Server struct {
 	Name string
 	ChannelID string
-	Admins []string
-	Muted []string
+	Admins DiscordIdentityList
+	Muted DiscordIdentityList
 	Prefix string
 	Outbound chan *Command
 	Mux sync.Mutex
@@ -70,36 +70,16 @@ func (server *Server) unlinkChannel() (success bool) {
 }
 
 
-func isSameUser(user *discordgo.User, userid string) bool {
-	userName := user.Username + "#" + user.Discriminator
-	userID := user.ID
-	if userid == userID || userid == userName {
-		return true
-	}
-	return false
-}
-
-
-func (server *Server) isAdmin(user *discordgo.User) bool {
+func (server *Server) isAdmin(member *discordgo.Member) bool {
 	if len(Config.Servers[server.Name].Admins) == 0 {
 		return true
 	}
-	for _, admin := range Config.Servers[server.Name].Admins {
-		if isSameUser(user, admin) {
-			return true
-		}
-	}
-	return false
+	return Config.Servers[server.Name].Admins.isInList(member)
 }
 
 
-func (server *Server) isMuted(user *discordgo.User) bool {
-	for _, mutedUser := range server.Muted {
-		if isSameUser(user, mutedUser) {
-			return true
-		}
-	}
-	return false
+func (server *Server) isMuted(member *discordgo.Member) bool {
+	return server.Muted.isInList(member)
 }
 
 

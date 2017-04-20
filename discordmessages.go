@@ -142,6 +142,30 @@ func getLastMessageID(channelID string) (string, bool) {
 }
 
 
+func findKeywordNotifications(server *Server, message string) (found bool, response string) {
+	guild, err := getGuildForChannel(session, server.ChannelID)
+	if err != nil {
+		return false, ""
+	}
+	
+	fields := strings.Fields(message)
+	keywordMapping := Config.Servers[server.Name].KeywordNotifications
+	for i:=0; i < len(keywordMapping); i+=2 {
+		keywords := keywordMapping[i]
+		mentions := keywordMapping[i+1]
+		for _, keyword := range keywords {
+			for _, field := range fields {
+				if field == string(keyword) {
+					response += mentions.toMentionString(guild)
+					found = true
+				}
+			}
+		}
+	}
+	return
+}
+
+
 func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber TeamNumber, message string) {
 	if server, ok := serverList[serverName]; ok {
 		translatedMessage := getTextToUnicodeTranslator().Replace(message)
@@ -185,6 +209,10 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 		
 		case "text":
 			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextChatMessage(server.Name, username, teamNumber, translatedMessage))
+		}
+		
+		if keywordsFound, mentions := findKeywordNotifications(server, translatedMessage); keywordsFound && mentions != "" {
+			_, _ = session.ChannelMessageSend(server.ChannelID, mentions)
 		}
 	}
 }
