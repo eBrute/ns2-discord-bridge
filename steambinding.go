@@ -106,6 +106,10 @@ func (steamID SteamID3) getSteamProfile() (*SteamPlayer, error) {
 		return nil, errors.New("Invalid Steamid")
 	}
 	
+	if Config.Steam.WebApiKey == "" {
+		return nil, errors.New("No Steam Web API Key set")
+	}
+	
 	steamResponse := ISteamUser{}
 	url := "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + Config.Steam.WebApiKey + "&steamids=" + steamID.to64().String()
 	if err := getJson(url, &steamResponse); err != nil {
