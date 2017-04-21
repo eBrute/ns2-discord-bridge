@@ -50,7 +50,7 @@ func (identity *DiscordIdentity) matches(member *discordgo.Member) bool {
 	for _, roleID := range member.Roles {
 		guildID := member.GuildID
 		role, err := session.State.Role(guildID, roleID)
-		if err != nil && identity.matchesRole(role) {
+		if err == nil && identity.matchesRole(role) {
 			return true
 		}
 	}
