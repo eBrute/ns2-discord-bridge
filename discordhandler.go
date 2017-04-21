@@ -101,7 +101,10 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	
 	guild, _ := getGuildForChannel(s, m.ChannelID)
-	authorMember, _ := s.State.Member(guild.ID, author.ID)
+	authorMember, err := s.State.Member(guild.ID, author.ID)
+	if err != nil {
+		return
+	}
 	
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
