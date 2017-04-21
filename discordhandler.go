@@ -115,9 +115,12 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if server.isMuted(authorMember) {
 			return
 		}
-		
+		nick := authorMember.Nick
+		if nick == "" {
+			nick = author.Username
+		}
 		server.TimeoutSet <- 60 // sec
-		server.Outbound <- createChatMessageCommand(author.Username, m)
+		server.Outbound <- createChatMessageCommand(nick, m)
 		return
 	}
 
