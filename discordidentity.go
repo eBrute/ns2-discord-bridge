@@ -20,6 +20,11 @@ func (d DiscordIdentity) MarshalText() ([]byte, error) {
 }
 
 
+func (d *DiscordIdentity) String() string {
+    return string(*d)
+}
+
+
 func (list DiscordIdentityList) isInList(member *discordgo.Member) bool {
 	for _, entry := range list {
 		if entry.matches(member) {
