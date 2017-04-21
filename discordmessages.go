@@ -166,6 +166,13 @@ func findKeywordNotifications(server *Server, message string) (found bool, respo
 }
 
 
+func triggerKeywords(server *Server, message string) {
+	if keywordsFound, mentions := findKeywordNotifications(server, message); keywordsFound && mentions != "" {
+		_, _ = session.ChannelMessageSend(server.ChannelID, mentions)
+	}
+}
+
+
 func forwardChatMessageToDiscord(serverName string, username string, steamID SteamID3, teamNumber TeamNumber, message string) {
 	if server, ok := serverList[serverName]; ok {
 		translatedMessage := getTextToUnicodeTranslator().Replace(message)
@@ -180,9 +187,10 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 					lastEmbed.Color == teamNumber.getColor() &&
 					lastAuthor.Name == username &&
 					lastAuthor.URL == steamID.getSteamProfileLink() {
-					
+					// append to last message
 					lastEmbed.Description += "\n" + translatedMessage
 					lastMultilineChatMessage, _ = session.ChannelMessageEditEmbed(server.ChannelID, lastMessageID, lastEmbed)
+					triggerKeywords(server, translatedMessage)
 					return
 				}
 			}
@@ -211,9 +219,7 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 			_, _ = session.ChannelMessageSend(server.ChannelID, buildTextChatMessage(server.Name, username, teamNumber, translatedMessage))
 		}
 		
-		if keywordsFound, mentions := findKeywordNotifications(server, translatedMessage); keywordsFound && mentions != "" {
-			_, _ = session.ChannelMessageSend(server.ChannelID, mentions)
-		}
+		triggerKeywords(server, translatedMessage)
 	}
 }
 
