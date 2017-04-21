@@ -86,9 +86,6 @@ func (server *Server) unlinkChannel() (success bool) {
 
 
 func (server *Server) isAdmin(member *discordgo.Member) bool {
-	if len(Config.Servers[server.Name].Admins) == 0 {
-		return true
-	}
 	return Config.Servers[server.Name].Admins.isInList(member)
 }
 
