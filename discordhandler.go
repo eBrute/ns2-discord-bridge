@@ -103,6 +103,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	guild, _ := getGuildForChannel(s, m.ChannelID)
 	authorMember, err := s.State.Member(guild.ID, author.ID)
 	if err != nil {
+		// ignore non-member messages
 		return
 	}
 	
