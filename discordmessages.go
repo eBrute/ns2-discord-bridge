@@ -290,6 +290,16 @@ func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, m
 			case "text":
 				_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
 		}
+		
+		if messagetype.SubType == "changemap" {
+			if serverList.getNumOfLinkedServers() == 1 {
+				mapname := strings.TrimSuffix(strings.TrimPrefix(message, "Changed map to '"), "'")
+				session.UpdateStatus(0, mapname)
+				// session.UpdateStreamingStatus(0, "Natural Selection 2", "https://www.twitch.tv/naturalselection2")
+			} else {
+				session.UpdateStatus(0, "")
+			}
+		}
 	}
 }
 

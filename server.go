@@ -46,6 +46,21 @@ func (serverList ServerList) getServerLinkedToChannel(channelID string) (server 
 }
 
 
+func (serverList ServerList) getNumOfLinkedServers() (count int) {
+	for _, v := range serverList {
+		if v.isLinked() {
+			count++
+		}
+	}
+	return
+}
+
+
+func (server *Server) isLinked() bool {
+	return server.ChannelID != ""
+}
+
+
 func (server *Server) linkChannelID(channelID string) error {
 	if linkedServer, ok := serverList.getServerLinkedToChannel(channelID); ok {
 		if linkedServer == server {

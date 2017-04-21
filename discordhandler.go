@@ -46,6 +46,7 @@ func startDiscordBot() {
 	}
 	botID = user.ID
 
+	session.UpdateStatus(0, "")
 	session.AddHandler(chatEventHandler)
 
 	// open the websocket and begin listening.
