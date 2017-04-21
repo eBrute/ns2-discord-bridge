@@ -126,7 +126,6 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
-		case "test": responseHandler.testChannel()
 		case "link": responseHandler.linkChannel()
 		case "list": responseHandler.listChannel()
 		case "unlink": responseHandler.unlinkChannel()
@@ -139,25 +138,6 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "commands": fallthrough
 		case "help": responseHandler.printHelpMessage()
 	}
-}
-
-
-func (r *ResponseHandler) testChannel() {
-	// server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
-	// if !isServerLinked {
-	// 	return
-	// }
-	// response := ""
-	// println(server.Name)
-	// println(len(Config.Servers[server.Name].KeywordNotifications))
-	// for _, mention := range Config.Servers[server.Name].AdminMentions {
-	// 	if role, err := mention.getRole(r.guild); err == nil {
-	// 		response += "<@&" + role.ID + "> "
-	// 	} else if user, err := mention.getUser(r.guild); err == nil {
-	// 		response += "<@!" + user.ID + "> "
-	// 	}
-	// }
-	// r.respond(response)
 }
 
 
