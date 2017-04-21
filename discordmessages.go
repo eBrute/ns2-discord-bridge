@@ -271,6 +271,8 @@ func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, m
 			message += " (" + playerCount + ")"
 		}
 		
+		statusChannelID := Config.Servers[server.Name].StatusChannelID
+		
 		switch Config.Discord.MessageStyle {
 			default: fallthrough
 			case "multiline": fallthrough
@@ -292,9 +294,17 @@ func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, m
 					},
 				}
 				_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
+				
+				if statusChannelID != "" {
+					_, _ = session.ChannelMessageSendEmbed(statusChannelID, embed)
+				}
 			
 			case "text":
 				_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
+				
+				if statusChannelID != "" {
+					_, _ = session.ChannelMessageSend(statusChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
+				}
 		}
 		
 		if messagetype.SubType == "changemap" {
