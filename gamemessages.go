@@ -8,6 +8,7 @@ import (
 
 var (
 	mentionPattern *regexp.Regexp
+	rolePattern *regexp.Regexp
 	channelPattern *regexp.Regexp
 )
 
@@ -20,6 +21,7 @@ type Command struct {
 
 func init() {
 	mentionPattern, _ = regexp.Compile(`[\\]?<@[!]?\d+>`)
+	rolePattern, _ = regexp.Compile(`[\\]?<@&\d+>`)
 	channelPattern, _ = regexp.Compile(`[\\]?<#\d+>`)
 }
 
@@ -31,6 +33,18 @@ func mentionTranslator(mentions []*discordgo.User, guild *discordgo.Guild) (func
 			if mention.ID == id {
 				return "@" + getUserNickname(mention, guild)
 			}
+		}
+		return match
+	}
+}
+
+
+func roleTranslator(mentionRoles []string, guild *discordgo.Guild) (func(string) string) {
+	return func(match string) string {
+		roleID := strings.Trim(match, "\\<@&>")
+		role, err := session.State.Role(guild.ID, roleID)
+		if err == nil {
+			return "@" + role.Name
 		}
 		return match
 	}
@@ -73,6 +87,7 @@ func formatDiscordMessage(m *discordgo.MessageCreate) string {
 		panic(err.Error())
 	}
 	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions, guild) )
+	message = rolePattern.ReplaceAllStringFunc(message, roleTranslator(m.MentionRoles, guild) )
 	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions, guild) )
 	message = getUnicodeToTextTranslator().Replace(message)
 	return message
