@@ -77,6 +77,10 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			}
 			forwardServerStatusToDiscord(serverName, messageType, serverInfo)
 			
+		case "test":
+			forwardStatusMessageToDiscord(serverName, messageType, "Test successful", "")
+			return
+			
 		default: return
 	}
 	
