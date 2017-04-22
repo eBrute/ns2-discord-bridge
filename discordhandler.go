@@ -63,7 +63,7 @@ func startDiscordBot() {
 func createResponseHandler(s *discordgo.Session, m *discordgo.MessageCreate, message []string) *ResponseHandler {
 	guild, err := getGuildForChannel(s, m.ChannelID)
 	if err != nil {
-		panic("Cannot find guild. Permission problem?")
+		panic(err)
 	}
 	author, _ := s.State.Member(guild.ID, m.Author.ID)
 	return &ResponseHandler{
@@ -92,6 +92,22 @@ func getGuildForChannel(s *discordgo.Session, channelID string) (*discordgo.Guil
 }
 
 
+func getUserNickname(user *discordgo.User, guild *discordgo.Guild) string {
+	if member, err := session.State.Member(guild.ID, user.ID); err == nil {
+		return getMemberNickname(member)
+	}
+	return user.Username
+}
+
+
+func getMemberNickname(member *discordgo.Member) string {
+	if member.Nick != "" {
+		return member.Nick
+	}
+	return member.User.Username
+}
+
+
 func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	// ignore all messages created by the bot itself
@@ -100,7 +116,10 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	
-	guild, _ := getGuildForChannel(s, m.ChannelID)
+	guild, err := getGuildForChannel(s, m.ChannelID)
+	if err != nil {
+		panic(err)
+	}
 	authorMember, err := s.State.Member(guild.ID, author.ID)
 	if err != nil {
 		// ignore non-member messages
@@ -119,10 +138,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if server.isMuted(authorMember) {
 			return
 		}
-		nick := authorMember.Nick
-		if nick == "" {
-			nick = author.Username
-		}
+		nick := getMemberNickname(authorMember)
 		server.TimeoutSet <- 60 // sec
 		server.Outbound <- createChatMessageCommand(nick, m)
 		return
