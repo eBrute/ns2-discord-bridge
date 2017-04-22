@@ -1,3 +1,7 @@
+// This file contains functions to identify a discord identity.
+// A discord identity might be a user, referenced by id or by snowflake id (username + "#" + discriminator),
+// or a role, referenced by id or name
+
 package ns2discordbridge
 
 import (

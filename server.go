@@ -1,3 +1,7 @@
+// This file contains functions for managing servers.
+// A server is a connection between the game server and a specific Discord channel
+// This includes establishing the connection, muting users and timeouts for messages
+
 package ns2discordbridge
 
 import (
@@ -16,7 +20,6 @@ type Server struct {
 	ChannelID string
 	Admins DiscordIdentityList
 	Muted DiscordIdentityList
-	Prefix string
 	Outbound chan *Command
 	Mux sync.Mutex
 	ActiveThread int

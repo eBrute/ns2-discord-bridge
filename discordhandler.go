@@ -1,3 +1,5 @@
+// This file contains functions related to handling input coming from the Discord side
+
 package ns2discordbridge
 
 import (

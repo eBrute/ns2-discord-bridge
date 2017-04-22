@@ -1,3 +1,5 @@
+// This file contains functions related to handling requests coming in through http
+
 package ns2discordbridge
 
 import (
