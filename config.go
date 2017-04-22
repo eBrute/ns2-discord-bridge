@@ -76,17 +76,17 @@ func (config *Configuration) loadConfig(configFile string) {
 	
 	f, err := os.Open(configFile)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	defer f.Close()
 	
 	log.Println("Reading config file", configFile)
 	buf, err := ioutil.ReadAll(f)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	
 	if err := toml.Unmarshal(buf, &Config); err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }

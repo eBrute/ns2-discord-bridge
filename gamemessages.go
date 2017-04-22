@@ -70,7 +70,7 @@ func getUnicodeToTextTranslator() *strings.Replacer {
 func formatDiscordMessage(m *discordgo.MessageCreate) string {
 	guild, err := getGuildForChannel(session, m.ChannelID)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	message := mentionPattern.ReplaceAllStringFunc(m.Content, mentionTranslator(m.Mentions, guild) )
 	message = channelPattern.ReplaceAllStringFunc(message, channelTranslator(m.Mentions, guild) )

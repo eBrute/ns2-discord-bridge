@@ -63,7 +63,7 @@ func startDiscordBot() {
 func createResponseHandler(s *discordgo.Session, m *discordgo.MessageCreate, message []string) *ResponseHandler {
 	guild, err := getGuildForChannel(s, m.ChannelID)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	author, _ := s.State.Member(guild.ID, m.Author.ID)
 	return &ResponseHandler{
@@ -118,7 +118,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	guild, err := getGuildForChannel(s, m.ChannelID)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	authorMember, err := s.State.Member(guild.ID, author.ID)
 	if err != nil {
