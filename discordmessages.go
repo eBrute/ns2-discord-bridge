@@ -297,14 +297,14 @@ func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, m
 				}
 				_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
 				
-				if statusChannelID != "" {
+				if statusChannelID != "" && statusChannelID != server.ChannelID {
 					_, _ = session.ChannelMessageSendEmbed(statusChannelID, embed)
 				}
 			
 			case "text":
 				_, _ = session.ChannelMessageSend(server.ChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
 				
-				if statusChannelID != "" {
+				if statusChannelID != "" && statusChannelID != server.ChannelID {
 					_, _ = session.ChannelMessageSend(statusChannelID, Config.Servers[server.Name].ServerStatusMessagePrefix + message)
 				}
 		}
