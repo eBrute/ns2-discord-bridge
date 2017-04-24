@@ -1,6 +1,6 @@
 // This file handles formatting of messages that go to the Discord chat
 
-package ns2discordbridge
+package main
 
 import (
 	"strings"

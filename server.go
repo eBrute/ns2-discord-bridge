@@ -2,7 +2,7 @@
 // A server is a connection between the game server and a specific Discord channel
 // This includes establishing the connection, muting users and timeouts for messages
 
-package ns2discordbridge
+package main
 
 import (
 	"log"

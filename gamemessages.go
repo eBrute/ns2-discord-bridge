@@ -1,6 +1,6 @@
 // This file handles formatting of messages that go to the game
 
-package ns2discordbridge
+package main
 
 import (
 	"strings"

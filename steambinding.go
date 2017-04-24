@@ -1,6 +1,6 @@
 // This file contains functions for handling steam ids and querying steam profile information
 
-package ns2discordbridge
+package main
 
 import (
 	"net/http"

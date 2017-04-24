@@ -1,4 +1,4 @@
-package ns2discordbridge
+package main
 
 import (
 	"flag"

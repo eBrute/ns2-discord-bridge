@@ -2,7 +2,7 @@
 // A discord identity might be a user, referenced by id or by snowflake id (username + "#" + discriminator),
 // or a role, referenced by id or name
 
-package ns2discordbridge
+package main
 
 import (
 	"errors"
