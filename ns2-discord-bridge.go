@@ -10,7 +10,7 @@ var configFile string
 
 // parse command line arguments
 func init() {
-	flag.StringVar(&configFile, "c", "config.toml", "Configuration File")
+	flag.StringVar(&configFile, "c", "config.toml", "Specify Configuration File")
 	flag.Parse()
 }
 
