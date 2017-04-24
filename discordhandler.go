@@ -160,6 +160,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "rcon": responseHandler.sendRconCommand()
 		case "info":  responseHandler.requestServerInfo()
 		case "status": responseHandler.requestServerStatus()
+		case "channelinfo": responseHandler.printChannelInfo()
 		default : fallthrough
 		case "commands": fallthrough
 		case "help": responseHandler.printHelpMessage()
@@ -213,6 +214,21 @@ func (r *ResponseHandler) listChannel() {
 			r.respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
 		}
 	}
+}
+
+
+func (r *ResponseHandler) printChannelInfo() {
+	response := make([]string, 6)
+	response = append(response, "```")
+	channel, _ := r.session.State.Channel(r.message.ChannelID)
+	response = append(response, "Channel '" + channel.Name + "' Id: " + channel.ID)
+	guild, _ := r.session.Guild(channel.GuildID)
+	response = append(response, "Guild '" + guild.Name + "' Id: " + guild.ID)
+	for _, role := range guild.Roles {
+		response = append(response, "Role '" + role.Name + "' Id: " + role.ID)
+	}
+	response = append(response, "```")
+	r.respond(strings.Join(response, "\n"))
 }
 
 
