@@ -93,7 +93,6 @@ func (teamNumber TeamNumber) getText() string {
 
 func getTextToUnicodeTranslator() *strings.Replacer {
 	return strings.NewReplacer(
-		"yes", "no",
 		":)",  "😃",
 		":D",  "😄",
 		":(",  "😦",
