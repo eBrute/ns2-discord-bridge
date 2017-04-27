@@ -331,6 +331,7 @@ func (r *ResponseHandler) printHelpMessage() {
 !list all                - prints all linked servers
 !status                  - prints a short server status
 !info                    - prints a long server info
+!channelinfo             - prints ids of the current channel, guild and roles
 
 admin commands:
 !link <server>           - links server to this channel
