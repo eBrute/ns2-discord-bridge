@@ -67,6 +67,19 @@ func (messagetype MessageType) getColor() int {
 }
 
 
+func (messagetype MessageType) getIcon(server *Server) string {
+	configuredIcon := Config.Servers[server.Name].ServerIconUrl
+	if configuredIcon != "" || server.ChannelID == "" {
+		return configuredIcon
+	}
+	guild, err := getGuildForChannel(session, server.ChannelID)
+	if err == nil {
+		return guild.Icon
+	}
+	return ""
+}
+
+
 func (teamNumber TeamNumber) getColor() int {
 	msgConfig := Config.Messagestyles.Rich
 	switch teamNumber {
@@ -210,7 +223,7 @@ func forwardChatMessageToDiscord(serverName string, username string, steamID Ste
 			embed := &discordgo.MessageEmbed{
 				Color: teamNumber.getColor(),
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: username +": " + translatedMessage,
+					Text: username + ": " + translatedMessage,
 					IconURL: steamID.getAvatar(),
 				},
 			}
@@ -291,7 +304,7 @@ func forwardStatusMessageToDiscord(serverName string, messagetype MessageType, m
 					Color: messagetype.getColor(),
 					Footer: &discordgo.MessageEmbedFooter{
 						Text: message,
-						IconURL: Config.Servers[serverName].ServerIconUrl,
+						IconURL: messagetype.getIcon(server),
 					},
 				}
 				_, _ = session.ChannelMessageSendEmbed(server.ChannelID, embed)
@@ -395,8 +408,8 @@ func forwardServerStatusToDiscord(serverName string, messagetype MessageType, in
 		embed := &discordgo.MessageEmbed{
 			Color: messagetype.getColor(),
 			Author: &discordgo.MessageEmbedAuthor{
-				Name: info.ServerName,
-				IconURL: Config.Servers[serverName].ServerIconUrl,
+				Name: server.Name,
+				IconURL: messagetype.getIcon(server),
 			},
 			Description: description,
 			Fields: fields,
