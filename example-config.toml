@@ -26,7 +26,7 @@ message_style = "multiline" # options are: "multiline", "oneline", "text"
 address = ":8080"
 
 [steam]
-web_api_key = "xxxxxx-your-steam-web-api-key or leave empty"
+web_api_key = "xxxxxx-your-steam-web-api-key" # leave empty to deactivate steam avatars
 
 [servers]
     [servers.example1]
@@ -37,7 +37,7 @@ web_api_key = "xxxxxx-your-steam-web-api-key or leave empty"
     muted = ["Sandyclawz#1347"]
     server_chat_message_prefix = ""
     server_status_message_prefix = "<:apheriox:298852163759898624> "
-    server_icon_url = "https://cdn.discordapp.com/icons/164863821276512267/9a7f55887cb50e053e1b7b14b86af199.png"
+    server_icon_url = "https://cdn.discordapp.com/icons/164863821276512267/9a7f55887cb50e053e1b7b14b86af199.png" # leave empty for guild icon
 
     [servers.example2]
     channelID = "1645231543324534624"
