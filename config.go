@@ -29,7 +29,6 @@ type MessageStyleRichConfig struct {
 	PlayerJoinColor []int
 	PlayerLeaveColor []int
 	StatusColor []int
-	ChatMessageColor []int
 	ChatMessageReadyRoomColor []int
 	ChatMessageMarineColor []int
 	ChatMessageAlienColor []int

@@ -4,7 +4,6 @@ message_style = "multiline" # options are: "multiline", "oneline", "text"
 
 [messagestyles]
 	[messagestyles.rich]
-	chat_message_color = [50, 127, 180]
 	chat_message_ready_room_color = [75, 78, 82]
 	chat_message_marine_color = [50, 127, 180]
 	chat_message_alien_color = [246, 92, 0]
