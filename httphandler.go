@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 )
 
+const recordSep = ""
+
 
 func startHTTPServer() {
 	http.HandleFunc("/discordbridge", httpHandler)
@@ -91,12 +93,8 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		select {
 		case cmd := <-server.Outbound:
 			server.TimeoutReset <- 0
-			js, err := json.Marshal(cmd)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.Write(js)
+			response := cmd.Type + recordSep + cmd.User + recordSep + cmd.Message
+			w.Write([]byte(response))
 			return
 			
 		default:
