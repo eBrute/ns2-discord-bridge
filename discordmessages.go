@@ -52,7 +52,6 @@ var (
 func (messagetype MessageType) getColor() int {
 	msgConfig := Config.Messagestyles.Rich
 	switch messagetype.GroupType {
-		case "chat":        return Config.getColor(msgConfig.ChatMessageColor, DefaultMessageColor)
 		case "player":  
 			switch messagetype.SubType {
 				case "join":  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
