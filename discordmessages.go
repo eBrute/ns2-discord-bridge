@@ -73,7 +73,7 @@ func (messagetype MessageType) getIcon(server *Server) string {
 	}
 	guild, err := getGuildForChannel(session, server.ChannelID)
 	if err == nil {
-		return guild.Icon
+		return "https://cdn.discordapp.com/icons/" + guild.ID + "/" + guild.Icon + ".png"
 	}
 	return ""
 }
