@@ -161,6 +161,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "info":  responseHandler.requestServerInfo()
 		case "status": responseHandler.requestServerStatus()
 		case "channelinfo": responseHandler.printChannelInfo()
+		case "version": responseHandler.printVersion()
 		default : fallthrough
 		case "commands": fallthrough
 		case "help": responseHandler.printHelpMessage()
@@ -229,6 +230,11 @@ func (r *ResponseHandler) printChannelInfo() {
 	}
 	response = append(response, "```")
 	r.respond(strings.Join(response, "\n"))
+}
+
+
+func (r *ResponseHandler) printVersion() {
+	r.respond("Version " + version)
 }
 
 
@@ -332,6 +338,7 @@ func (r *ResponseHandler) printHelpMessage() {
 !status                  - prints a short server status
 !info                    - prints a long server info
 !channelinfo             - prints ids of the current channel, guild and roles
+!version                 - prints the version number
 
 admin commands:
 !link <server>           - links server to this channel
