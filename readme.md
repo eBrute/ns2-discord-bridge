@@ -65,10 +65,12 @@ The game server runs a mod, which collects player messages and sends them to the
 
 8. Start the discord bridge. <br />
    The bot should now come online. Type `!version` or `!help` in any channel that it has access to, it should respond.
+   You may want to find a way to automatically start the dicord bot after a reboot.
 
 9. Add the Discord Bridge Mod to your NS2 Server. <br />
    You can find the mod [here](http://steamcommunity.com/sharedfiles/filedetails/?id=898502581).
    The mod is a plugin for [shine](http://steamcommunity.com/sharedfiles/filedetails/?id=117887554), so you need to add it as well.
+   
 10. Configure the mod. <br />
    When you run the mod for the first time, a config file is created in **<configdir>/shine/plugins/DiscordBridge.json** where *<configdir>* is usually located in *%appdata%/Natural Selection 2* (Windows) or *~/.config/Natural Selection 2/* (Linux). Alternatively you may create the file yourself.
    ```json
