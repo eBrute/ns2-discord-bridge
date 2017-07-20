@@ -58,19 +58,19 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
 			teamNumber, _ := strconv.Atoi(request.PostFormValue("team"))
 			message := request.PostFormValue("msg")
-			forwardChatMessageToDiscord(serverName, player, SteamID3(steamid), TeamNumber(teamNumber), message)
+			forwardChatMessageToDiscord(server, player, SteamID3(steamid), TeamNumber(teamNumber), message)
 			
 		case "player": 
 			player := request.PostFormValue("plyr")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
 			playerCount := request.PostFormValue("pc")
-			forwardPlayerEventToDiscord(serverName, messageType, player, SteamID3(steamid), playerCount)
+			forwardPlayerEventToDiscord(server, messageType, player, SteamID3(steamid), playerCount)
 			
 		case "status": fallthrough
 		case "adminprint":
 			playerCount := request.PostFormValue("pc")
 			message := request.PostFormValue("msg")
-			forwardStatusMessageToDiscord(serverName, messageType, message, playerCount)
+			forwardStatusMessageToDiscord(server, messageType, message, playerCount)
 			
 		case "info":
 			serverInfo := ServerInfo{}
@@ -79,10 +79,10 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			if err != nil {
 				log.Println(err.Error())
 			}
-			forwardServerStatusToDiscord(serverName, messageType, serverInfo)
+			forwardServerStatusToDiscord(server, messageType, serverInfo)
 			
 		case "test":
-			forwardStatusMessageToDiscord(serverName, messageType, "Test successful", "")
+			forwardStatusMessageToDiscord(server, messageType, "Test successful", "")
 			return
 			
 		default: return

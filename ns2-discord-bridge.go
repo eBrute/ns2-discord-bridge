@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-const version = "v5.1.1"
+const version = "v5.1.2"
 var configFile string
 
 // parse command line arguments
@@ -22,7 +22,7 @@ func main() {
 	for serverName, v := range Config.Servers {
 		serverList[serverName] = &Server{
 			Name : serverName,
-			ChannelID : v.ChannelID,
+			Config : v,
 			Outbound : make(chan *Command),
 			Muted : v.Muted,
 			TimeoutSet : make(chan int),

@@ -5,9 +5,7 @@
 package main
 
 import (
-	"log"
 	"sync"
-	"errors"
 	"time"
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,7 +15,7 @@ var serverList ServerList
 
 type Server struct {
 	Name string
-	ChannelID string
+	Config ServerConfig
 	Admins DiscordIdentityList
 	Muted DiscordIdentityList
 	Outbound chan *Command
@@ -33,15 +31,9 @@ func init() {
 }
 
 
-func (serverList ServerList) getServerByName(serverName string) (server *Server, ok bool) {
-	server, ok = serverList[serverName]
-	return
-}
-
-
-func (serverList ServerList) getServerLinkedToChannel(channelID string) (server *Server, success bool) {
+func (serverList ServerList) getServerByChannelID(channelID string) (server *Server, success bool) {
 	for _, v := range serverList {
-		if v.ChannelID == channelID {
+		if v.Config.ChannelID == channelID {
 			return v, true
 		}
 	}
@@ -49,47 +41,8 @@ func (serverList ServerList) getServerLinkedToChannel(channelID string) (server 
 }
 
 
-func (serverList ServerList) getNumOfLinkedServers() (count int) {
-	for _, v := range serverList {
-		if v.isLinked() {
-			count++
-		}
-	}
-	return
-}
-
-
-func (server *Server) isLinked() bool {
-	return server.ChannelID != ""
-}
-
-
-func (server *Server) linkChannelID(channelID string) error {
-	if linkedServer, ok := serverList.getServerLinkedToChannel(channelID); ok {
-		if linkedServer == server {
-			return errors.New("This channel was already linked to '" + linkedServer.Name + "'")
-		} else {
-			return errors.New("This channel is already linked to '" + linkedServer.Name +"'. Use !unlink first.")
-		}
-	}
-	server.ChannelID = channelID
-	log.Println("Linked channelID " + channelID + " to server " + server.Name)
-	return nil
-}
-
-
-func (server *Server) unlinkChannel() (success bool) {
-	if server.ChannelID != "" {
-		log.Println("Uninked channelID " + server.ChannelID + " from server " + server.Name)
-		server.ChannelID = ""
-		success = true
-	}
-	return
-}
-
-
 func (server *Server) isAdmin(member *discordgo.Member) bool {
-	return Config.Servers[server.Name].Admins.isInList(member)
+	return server.Config.Admins.isInList(member)
 }
 
 
