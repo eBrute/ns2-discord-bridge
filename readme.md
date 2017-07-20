@@ -21,7 +21,7 @@ The game server runs a mod, which collects player messages and sends them to the
 3. Create a Discord bot and get a token. <br />
    Go to https://discordapp.com/developers/applications/me, click on My Apps and add a new App.
    Name the bot as you like (i.e. game-bot) and add a description (optional) and icon. If you can't think of one, use this:
-   ![discord bot avatar](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/discordbot.png) 
+   ![discord bot avatar](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/discordbot.png) <br />
    All of these can be changed later.
    
    On the next page, create a bot user. Now you have created a bot account, and will be forwarded to the bots configuration site. There you can view the *APP Bot User Token* (not the Client Secret!). Add the token to your config file. You may make your bot public, but that is not required. Also note down the *Client ID*, which you need to add the bot to your Discord server.
