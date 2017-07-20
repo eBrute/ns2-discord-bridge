@@ -21,7 +21,7 @@ The game server runs a mod, which collects player messages and sends them to the
 3. Create a Discord bot and get a token. <br />
    Go to https://discordapp.com/developers/applications/me, click on My Apps and add a new App.
    Name the bot as you like (i.e. game-bot) and add a description (optional) and icon. If you can't think of one, use this:
-   ![discord bot avatar](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/discordbot.png) https://github.com/eBrute/ns2-discord-bridge/blob/master/images/discordbot.png
+   ![discord bot avatar](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/discordbot.png) 
    All of these can be changed later.
    
    On the next page, create a bot user. Now you have created a bot account, and will be forwarded to the bots configuration site. There you can view the *APP Bot User Token* (not the Client Secret!). Add the token to your config file. You may make your bot public, but that is not required. Also note down the *Client ID*, which you need to add the bot to your Discord server.
@@ -35,10 +35,8 @@ The game server runs a mod, which collects player messages and sends them to the
 5. Setup HTTP server. <br />
    The discord bridge opens it's own HTTP server for communication with the game. The default config uses
    ```toml
-   {
-       [httpserver]
-       address = ":8080"
-   }
+   [httpserver]
+   address = ":8080"
    ```
    which means the HTTP server runs on port 8080 on all reachable interfaces. If the discord bridge is running on the same machine as the ns2 game server, you might even use `address = "localhost:8080"`, which means the HTTP server is only accessible from the same machine.
    
@@ -123,13 +121,13 @@ Command                  | Description
 ## Message Style Options
 
 **message_style** in the `[discord]` section sets the style for the discord messages. Three different output formats are supported:
-  * `multiline` : ![multiline](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/message_styles_multiline.png) <br />
+  * `multiline` : <br /> ![multiline](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/message_styles_multiline.png) <br />
   ➕ supports steam avatars and steam profiles, colors messages by team/type, groups consecutive messages of the same user <br />
   ➖ 2 lines per message, takes a lot of vertical space
-  * `oneline` : ![oneline](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/message_styles_oneline.png) <br />
+  * `oneline` : <br /> ![oneline](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/message_styles_oneline.png) <br />
   ➕ supports steam avatars, colors messages by team/type <br />
   ➖ does not group messages, player names do not link to their steam profile, wasted vertical space between messages <br />
-  * `text` : ![text](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/message_styles_text.png) <br />
+  * `text` : <br /> ![text](https://github.com/eBrute/ns2-discord-bridge/raw/master/images/message_styles_text.png) <br />
   ➕ very dense, supports (custom) emoticons <br />
   ➖ no steam avatars or profiles, no colors, no images, no grouping <br />
     
@@ -139,7 +137,7 @@ The formating of the *text* style is configurable in the `[messagestyles.text]` 
 
 ## Additional Server Config Options
 
-Certain config options require a discord identity. This is a string with either the name of a role ("my role"), the full id of a role ("164864561277698048"), the full id of a user ("125786284395462656") or the snowflake id of a user ("Brute#9034"). The later can be aquired by just typing "@Brute" into discord and hitting enter.
+Certain config options require a discord identity. This is a string with either the name of a role ("my role"), the full id of a role ("164864561277698048"), the full id of a user ("125786284395462656") or the snowflake id of a user ("Brute#9034"). The latter can be aquired by just typing "@Brute" into discord and hitting enter.
 
 Field  | Value | Description
 ------------- | ------------- | -------------
