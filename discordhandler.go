@@ -131,9 +131,9 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
 	
 	if len(commandMatches) == 0 { // this is a regular message
-		server, isServerLinked := serverList.getServerLinkedToChannel(m.ChannelID)
+		server, isServerLinked := serverList.getServerByChannelID(m.ChannelID)
 		if !isServerLinked {
-			// this channel isnt linked to any server, so just do nothing
+			// this channel isn't linked to any server, so just do nothing
 			return
 		}
 		
@@ -152,9 +152,6 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
-		case "link": responseHandler.linkChannel()
-		case "list": responseHandler.listChannel()
-		case "unlink": responseHandler.unlinkChannel()
 		case "mute": responseHandler.muteUser()
 		case "unmute": responseHandler.unmuteUser()
 		case "rcon": responseHandler.sendRconCommand()
@@ -169,55 +166,6 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 
-func (r *ResponseHandler) linkChannel() {
-	if len(r.messageContent) < 1 {
-		r.respond("You need to specify a server")
-		return
-	}
-	server, ok := serverList.getServerByName(r.messageContent[0])
-	if !ok {
-		r.respond("The server '" + r.messageContent[0] + "' is not configured")
-		return
-	}
-	if !server.isAdmin(r.author) {
-		r.respond("You are not registered as an admin for server '" + server.Name + "'")
-		return
-	}
-	if err := server.linkChannelID(r.message.ChannelID); err != nil {
-		r.respond(err.Error())
-	} else {
-		r.respond("This channel is now linked to '" + server.Name + "'")
-	}
-}
-
-
-func (r *ResponseHandler) unlinkChannel() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
-	if !isServerLinked {
-		r.respond("Channel is not linked to any server. Use !link <servername> first.")
-		return
-	}
-
-	if !server.isAdmin(r.author) {
-		r.respond("You are not registered as an admin for server '" + server.Name + "'")
-		return
-	}
-	server.unlinkChannel()
-	r.respond("Unlinked this channel")
-}
-
-
-func (r *ResponseHandler) listChannel() {
-	listAll := len(r.messageContent) > 0 && r.messageContent[0] == "all"
-	for _, server := range serverList {
-		id := server.ChannelID
-		if listAll || id == r.message.ChannelID {
-			r.respond("Server '" + server.Name + "' is linked to channel <#" + id + "> (" + id + ")")
-		}
-	}
-}
-
-
 func (r *ResponseHandler) printChannelInfo() {
 	response := make([]string, 6)
 	response = append(response, "```")
@@ -227,6 +175,15 @@ func (r *ResponseHandler) printChannelInfo() {
 	response = append(response, "Guild '" + guild.Name + "' Id: " + guild.ID)
 	for _, role := range guild.Roles {
 		response = append(response, "Role '" + role.Name + "' Id: " + role.ID)
+	}
+	for _, server := range serverList {
+		id := server.Config.ChannelID
+		linkedChannel, err := r.session.State.Channel(id)
+		name := "<unknown channel>"
+		if err == nil {
+			name = "<#" + linkedChannel.Name + ">"
+		}
+		response = append(response, "Server '" + server.Name + "' <-> Channel " + name + " (" + id + ")")
 	}
 	response = append(response, "```")
 	r.respond(strings.Join(response, "\n"))
@@ -239,9 +196,9 @@ func (r *ResponseHandler) printVersion() {
 
 
 func (r *ResponseHandler) muteUser() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
+	server, isServerLinked := serverList.getServerByChannelID(r.message.ChannelID)
 	if !isServerLinked {
-		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		r.respond("Channel is not linked to any server.")
 		return
 	}
 
@@ -263,9 +220,9 @@ func (r *ResponseHandler) muteUser() {
 
 
 func (r *ResponseHandler) unmuteUser() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
+	server, isServerLinked := serverList.getServerByChannelID(r.message.ChannelID)
 	if !isServerLinked {
-		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		r.respond("Channel is not linked to any server.")
 		return
 	}
 
@@ -289,9 +246,9 @@ func (r *ResponseHandler) unmuteUser() {
 
 
 func (r *ResponseHandler) requestServerStatus() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
+	server, isServerLinked := serverList.getServerByChannelID(r.message.ChannelID)
 	if !isServerLinked {
-		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		r.respond("Channel is not linked to any server.")
 		return
 	}
 
@@ -301,9 +258,9 @@ func (r *ResponseHandler) requestServerStatus() {
 
 
 func (r *ResponseHandler) requestServerInfo() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
+	server, isServerLinked := serverList.getServerByChannelID(r.message.ChannelID)
 	if !isServerLinked {
-		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		r.respond("Channel is not linked to any server.")
 		return
 	}
 
@@ -313,9 +270,9 @@ func (r *ResponseHandler) requestServerInfo() {
 
 
 func (r *ResponseHandler) sendRconCommand() {
-	server, isServerLinked := serverList.getServerLinkedToChannel(r.message.ChannelID)
+	server, isServerLinked := serverList.getServerByChannelID(r.message.ChannelID)
 	if !isServerLinked {
-		r.respond("Channel is not linked to any server. Use !link <servername> first.")
+		r.respond("Channel is not linked to any server.")
 		return
 	}
 
@@ -333,16 +290,12 @@ func (r *ResponseHandler) printHelpMessage() {
 	r.respond("```" + `
 !help                    - prints this help
 !commands                - prints this help
-!list                    - prints the server linked to this channel
-!list all                - prints all linked servers
 !status                  - prints a short server status
 !info                    - prints a long server info
 !channelinfo             - prints ids of the current channel, guild and roles
 !version                 - prints the version number
 
 admin commands:
-!link <server>           - links server to this channel
-!unlink                  - unlinks this channel
 !mute @discorduser(s)    - dont forward messages from user(s) to the server
 !unmute @discorduser(s)  - remove user(s) from being muted
 !rcon <console commands> - executes console commands directly on the linked server
