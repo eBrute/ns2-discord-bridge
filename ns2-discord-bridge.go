@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-const version = "v5.3.0"
+const version = "v5.4.0"
 var configFile string
 
 // parse command line arguments
