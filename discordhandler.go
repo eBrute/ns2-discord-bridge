@@ -8,6 +8,10 @@ import (
 	"strconv"
 	"errors"
 	"regexp"
+	"net/http"
+	"io/ioutil"
+	"encoding/json"
+	"net/url"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -141,8 +145,11 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		nick := getMemberNickname(authorMember)
-		server.TimeoutSet <- 60 // sec
-		server.Outbound <- createChatMessageCommand(nick, m)
+		http.PostForm(server.Config.WebAdmin, url.Values {
+			"request": {"discordsend"},
+			"user":    {nick},
+			"msg":	   {formatDiscordMessage(m)},
+		})
 		return
 	}
 
@@ -252,8 +259,14 @@ func (r *ResponseHandler) requestServerStatus() {
 		return
 	}
 
-	server.TimeoutSet <- 60 // sec
-	server.Outbound <- createServerStatusCommand()
+	resp, _ := http.PostForm(server.Config.WebAdmin, url.Values {
+		"request": {"discordinfo"},
+	})
+
+	serverInfo := ServerInfo {}
+	body, _ := ioutil.ReadAll(resp.Body)
+	_ = json.Unmarshal(body, &serverInfo)
+	forwardServerStatusToDiscord(server, MessageType{SubType: "status"}, serverInfo)
 }
 
 
@@ -264,8 +277,14 @@ func (r *ResponseHandler) requestServerInfo() {
 		return
 	}
 
-	server.TimeoutSet <- 60 // sec
-	server.Outbound <- createServerInfoCommand()
+	resp, _ := http.PostForm(server.Config.WebAdmin, url.Values {
+		"request": {"discordinfo"},
+	})
+
+	serverInfo := ServerInfo {}
+	body, _ := ioutil.ReadAll(resp.Body)
+	_ = json.Unmarshal(body, &serverInfo)
+	forwardServerStatusToDiscord(server, MessageType{SubType: "info"}, serverInfo)
 }
 
 
@@ -280,23 +299,24 @@ func (r *ResponseHandler) sendRconCommand() {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
-	command := strings.Join(r.messageContent[:], " ")
-	server.TimeoutSet <- 60 // sec
-	server.Outbound <- createRconCommand(r.message.Author.Username, command)
+
+	http.PostForm(server.Config.WebAdmin, url.Values {
+		"command": {strings.Join(r.messageContent[:], " ")},
+	})
 }
 
 
 func (r *ResponseHandler) printHelpMessage() {
 	r.respond("```" + `
-!help                    - prints this help
-!commands                - prints this help
-!status                  - prints a short server status
-!info                    - prints a long server info
-!channelinfo             - prints ids of the current channel, guild and roles
-!version                 - prints the version number
+!help					 - prints this help
+!commands				 - prints this help
+!status					 - prints a short server status
+!info					 - prints a long server info
+!channelinfo			 - prints ids of the current channel, guild and roles
+!version				 - prints the version number
 
 admin commands:
-!mute @discorduser(s)    - dont forward messages from user(s) to the server
+!mute @discorduser(s)	 - dont forward messages from user(s) to the server
 !unmute @discorduser(s)  - remove user(s) from being muted
 !rcon <console commands> - executes console commands directly on the linked server
 ` + "```")

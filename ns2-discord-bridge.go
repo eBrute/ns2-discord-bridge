@@ -23,16 +23,9 @@ func main() {
 		serverList[serverName] = &Server{
 			Name : serverName,
 			Config : v,
-			Outbound : make(chan *Command),
 			Muted : v.Muted,
-			TimeoutSet : make(chan int),
-			TimeoutReset : make(chan int),
 		}
 		log.Println("Linked server '"+ serverName +"' to channel", v.ChannelID)
-	}
-
-	for _, server := range serverList {
-		go server.clearOutboundChannelOnInactivity()
 	}
 
 	startDiscordBot()

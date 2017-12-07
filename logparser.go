@@ -32,7 +32,8 @@ var (
 	init_regexp = regexp.MustCompile("^--DISCORD--\\|init" +
 		fieldSep + "(.*)\n") // map
 
-	join_regexp = regexp.MustCompile("^--DISCORD--\\|join" +
+	player_regexp = regexp.MustCompile("^--DISCORD--\\|player" +
+		fieldSep + "(.*?)" + // action
 		fieldSep + "(.*?)" + // name
 		fieldSep + "(.*?)" + // steam id
 		fieldSep + "(.*)\n") // player count
@@ -75,12 +76,14 @@ func startLogParser() {
 						var msgtype MessageType
 						msgtype.GroupType = "status"
 						switch gamestate {
+						/* These are pretty much useless
 						case "WarmUp":
 							message          = "Warm-up started on "
 							msgtype.SubType = "warmup"
 						case "PreGame":
 							message          = "Pregame started on "
 							msgtype.SubType = "pregame"
+						*/
 						case "Started":
 							message          = "Round started on "
 							msgtype.SubType = "roundstart"
@@ -106,22 +109,14 @@ func startLogParser() {
 						currmap := matches[1]
 						message := "Loaded "
 						forwardStatusMessageToDiscord(server, MessageType {GroupType: "status", SubType: "init"}, message, "", currmap)
-					} else if matches := join_regexp.FindStringSubmatch(line);       matches != nil {
-						name       := matches[1]
-						steamid, _ := strconv.ParseInt(matches[2], 10, 32)
-						players    := matches[3]
+					} else if matches := player_regexp.FindStringSubmatch(line);     matches != nil {
+						action     := matches[1]
+						name       := matches[2]
+						steamid, _ := strconv.ParseInt(matches[3], 10, 32)
+						players    := matches[4]
 						msgtype := MessageType {
 							GroupType: "player",
-							SubType:   "join",
-						}
-						forwardPlayerEventToDiscord(server, msgtype, name, SteamID3(steamid), players)
-					} else if matches := leave_regexp.FindStringSubmatch(line);      matches != nil {
-						name       := matches[1]
-						steamid, _ := strconv.ParseInt(matches[2], 10, 32)
-						players    := matches[3]
-						msgtype := MessageType {
-							GroupType: "player",
-							SubType:   "leave",
+							SubType:   action,
 						}
 						forwardPlayerEventToDiscord(server, msgtype, name, SteamID3(steamid), players)
 					} else if matches := adminprint_regexp.FindStringSubmatch(line); matches != nil {

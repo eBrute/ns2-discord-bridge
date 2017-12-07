@@ -94,37 +94,3 @@ func formatDiscordMessage(m *discordgo.MessageCreate) string {
 	message = getUnicodeToTextTranslator().Replace(message)
 	return message
 }
-
-
-func createChatMessageCommand(username string, m *discordgo.MessageCreate) *Command {
-	return &Command{
-		Type: "chat",
-		User: username,
-		Message: formatDiscordMessage(m),
-	}
-}
-
-
-func createServerStatusCommand() *Command {
-	return &Command{
-		Type: "info",
-		Message: "status",
-	}
-}
-
-
-func createServerInfoCommand() *Command {
-	return &Command{
-		Type: "info",
-		Message: "info",
-	}
-}
-
-
-func createRconCommand(username string, command string) *Command {
-	return &Command{
-		Type: "rcon",
-		User: username,
-		Message: command,
-	}
-}
