@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-const version = "v5.4.0"
+const version = "v6.0.0"
 var configFile string
 
 // parse command line arguments
@@ -35,6 +35,8 @@ func main() {
 		go server.clearOutboundChannelOnInactivity()
 	}
 
-	startDiscordBot() // non-blocking
-	startHTTPServer() // blocking
+	startDiscordBot()
+	startLogParser()
+
+	select {}
 }

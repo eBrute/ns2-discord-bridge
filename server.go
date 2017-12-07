@@ -14,14 +14,14 @@ type ServerList map[string]*Server
 var serverList ServerList
 
 type Server struct {
-	Name string
-	Config ServerConfig
-	Admins DiscordIdentityList
-	Muted DiscordIdentityList
-	Outbound chan *Command
-	Mux sync.Mutex
+	Name         string
+	Config       ServerConfig
+	Admins       DiscordIdentityList
+	Muted        DiscordIdentityList
+	Outbound     chan *Command
+	Mux          sync.Mutex
 	ActiveThread int
-	TimeoutSet chan int
+	TimeoutSet   chan int
 	TimeoutReset chan int
 }
 

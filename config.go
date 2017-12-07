@@ -16,9 +16,6 @@ type Configuration struct {
 		Rich MessageStyleRichConfig
 		Text MessageStyleTextConfig
 	}
-	Httpserver struct {
-		Address string
-	}
 	Steam struct {
 		WebApiKey string
 	}
@@ -26,34 +23,36 @@ type Configuration struct {
 }
 
 type MessageStyleRichConfig struct {
-	PlayerJoinColor []int
-	PlayerLeaveColor []int
-	StatusColor []int
+	PlayerJoinColor           []int
+	PlayerLeaveColor          []int
+	StatusColor               []int
 	ChatMessageReadyRoomColor []int
-	ChatMessageMarineColor []int
-	ChatMessageAlienColor []int
+	ChatMessageMarineColor    []int
+	ChatMessageAlienColor     []int
 	ChatMessageSpectatorColor []int
 }
 
 type MessageStyleTextConfig struct {
-	ChatMessageFormat string
+	ChatMessageFormat          string
 	ChatMessageReadyRoomPrefix string
-	ChatMessageMarinePrefix string
-	ChatMessageAlienPrefix string
+	ChatMessageMarinePrefix    string
+	ChatMessageAlienPrefix     string
 	ChatMessageSpectatorPrefix string
-	PlayerJoinFormat string
-	PlayerLeaveFormat string
+	PlayerJoinFormat           string
+	PlayerLeaveFormat          string
 }
 
 type ServerConfig struct {
-	ChannelID string
-	StatusChannelID string
-	Admins DiscordIdentityList
-	Muted DiscordIdentityList
-	KeywordNotifications []DiscordIdentityList
-	ServerChatMessagePrefix string
+	ChannelID                 string
+	StatusChannelID           string
+	Admins                    DiscordIdentityList
+	Muted                     DiscordIdentityList
+	KeywordNotifications      []DiscordIdentityList
+	ServerChatMessagePrefix   string
 	ServerStatusMessagePrefix string
-	ServerIconUrl string
+	ServerIconUrl             string
+	WebAdmin                  string
+	LogFilePath               string
 }
 
 var Config Configuration

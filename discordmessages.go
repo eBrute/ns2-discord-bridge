@@ -277,7 +277,9 @@ func forwardPlayerEventToDiscord(server *Server, messagetype MessageType, userna
 }
 
 
-func forwardStatusMessageToDiscord(server *Server, messagetype MessageType, message string, playerCount string) {
+func forwardStatusMessageToDiscord(server *Server, messagetype MessageType, message string, playerCount string, mapname string) {
+	message += mapname
+
 	if playerCount != "" {
 		message += " (" + playerCount + ")"
 	}
@@ -320,7 +322,6 @@ func forwardStatusMessageToDiscord(server *Server, messagetype MessageType, mess
 
 	if messagetype.SubType == "changemap" {
 		if len(serverList) == 1 {
-			mapname := strings.TrimSuffix(strings.TrimPrefix(message, "Changed map to '"), "'")
 			session.UpdateStatus(0, mapname)
 			// session.UpdateStreamingStatus(0, "Natural Selection 2", "https://www.twitch.tv/naturalselection2")
 		} else {
