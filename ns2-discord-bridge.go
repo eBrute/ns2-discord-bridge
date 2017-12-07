@@ -18,7 +18,7 @@ func init() {
 func main() {
 	log.Println("Version", version)
 	Config.loadConfig(configFile)
-	
+
 	for serverName, v := range Config.Servers {
 		serverList[serverName] = &Server{
 			Name : serverName,
@@ -34,7 +34,7 @@ func main() {
 	for _, server := range serverList {
 		go server.clearOutboundChannelOnInactivity()
 	}
-	
+
 	startDiscordBot() // non-blocking
 	startHTTPServer() // blocking
 }

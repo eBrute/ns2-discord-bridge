@@ -65,26 +65,26 @@ func (config *Configuration) getColor(color []int, defaultColor int) int {
 	}
 	return color[0]*256*256 + color[1]*256 + color[2]
 }
-	
-	
+
+
 func (config *Configuration) loadConfig(configFile string) {
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		log.Println("No configuration file found in", configFile)
 		return
 	}
-	
+
 	f, err := os.Open(configFile)
 	if err != nil {
 		panic(err.Error())
 	}
 	defer f.Close()
-	
+
 	log.Println("Reading config file", configFile)
 	buf, err := ioutil.ReadAll(f)
 	if err != nil {
 		panic(err.Error())
 	}
-	
+
 	if err := toml.Unmarshal(buf, &Config); err != nil {
 		panic(err.Error())
 	}

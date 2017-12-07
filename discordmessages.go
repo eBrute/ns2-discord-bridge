@@ -69,7 +69,7 @@ func (messagetype MessageType) getIcon(server *Server) string {
 func (messagetype MessageType) getColor() int {
 	msgConfig := Config.Messagestyles.Rich
 	switch messagetype.GroupType {
-		case "player":  
+		case "player":
 			switch messagetype.SubType {
 				case "join":  return Config.getColor(msgConfig.PlayerJoinColor, DefaultMessageColor)
 				case "leave": return Config.getColor(msgConfig.PlayerLeaveColor, DefaultMessageColor)
@@ -165,7 +165,7 @@ func findKeywordNotifications(server *Server, message string) (found bool, respo
 	if err != nil {
 		return false, ""
 	}
-	
+
 	fields := strings.Fields(message)
 	keywordMapping := server.Config.KeywordNotifications
 	for i:=0; i < len(keywordMapping); i+=2 {
@@ -221,7 +221,7 @@ func forwardChatMessageToDiscord(server *Server, username string, steamID SteamI
 			},
 		}
 		lastMultilineChatMessage, _ = session.ChannelMessageSendEmbed(server.Config.ChannelID, embed)
-	
+
 	case "oneline":
 		embed := &discordgo.MessageEmbed{
 			Color: teamNumber.getColor(),
@@ -231,11 +231,11 @@ func forwardChatMessageToDiscord(server *Server, username string, steamID SteamI
 			},
 		}
 		_, _ = session.ChannelMessageSendEmbed(server.Config.ChannelID, embed)
-	
+
 	case "text":
 		_, _ = session.ChannelMessageSend(server.Config.ChannelID, buildTextChatMessage(server, username, teamNumber, translatedMessage))
 	}
-	
+
 	triggerKeywords(server, translatedMessage)
 }
 
@@ -246,17 +246,17 @@ func forwardPlayerEventToDiscord(server *Server, messagetype MessageType, userna
 		case "join1":	fallthrough
 		case "leave0":	timestamp = time.Now().UTC().Format("2006-01-02T15:04:05")
 	}
-	
+
 	if playerCount != "" {
 		playerCount = " (" + playerCount + ")"
 	}
-	
+
 	eventText := ""
 	switch messagetype.SubType {
 		case "join": eventText = username + " joined" + playerCount
 		case "leave": eventText = username + " left" + playerCount
 	}
-	
+
 	switch Config.Discord.MessageStyle {
 		default: fallthrough
 		case "multiline": fallthrough
@@ -270,7 +270,7 @@ func forwardPlayerEventToDiscord(server *Server, messagetype MessageType, userna
 				},
 			}
 			_, _ = session.ChannelMessageSendEmbed(server.Config.ChannelID, embed)
-		
+
 		case "text":
 			_, _ = session.ChannelMessageSend(server.Config.ChannelID, buildTextPlayerEvent(server, messagetype, username, playerCount))
 	}
@@ -281,9 +281,9 @@ func forwardStatusMessageToDiscord(server *Server, messagetype MessageType, mess
 	if playerCount != "" {
 		message += " (" + playerCount + ")"
 	}
-	
+
 	statusChannelID := server.Config.StatusChannelID
-	
+
 	switch Config.Discord.MessageStyle {
 		default: fallthrough
 		case "multiline": fallthrough
@@ -293,7 +293,7 @@ func forwardStatusMessageToDiscord(server *Server, messagetype MessageType, mess
 				case "roundstart": fallthrough
 				case "marinewin": fallthrough
 				case "alienwin": fallthrough
-				case "draw": 
+				case "draw":
 					timestamp = time.Now().UTC().Format("2006-01-02T15:04:05")
 			}
 			embed := &discordgo.MessageEmbed{
@@ -305,19 +305,19 @@ func forwardStatusMessageToDiscord(server *Server, messagetype MessageType, mess
 				},
 			}
 			_, _ = session.ChannelMessageSendEmbed(server.Config.ChannelID, embed)
-			
+
 			if statusChannelID != "" && statusChannelID != server.Config.ChannelID {
 				_, _ = session.ChannelMessageSendEmbed(statusChannelID, embed)
 			}
-		
+
 		case "text":
 			_, _ = session.ChannelMessageSend(server.Config.ChannelID, server.Config.ServerStatusMessagePrefix + message)
-			
+
 			if statusChannelID != "" && statusChannelID != server.Config.ChannelID {
 				_, _ = session.ChannelMessageSend(statusChannelID, server.Config.ServerStatusMessagePrefix + message)
 			}
 	}
-	
+
 	if messagetype.SubType == "changemap" {
 		if len(serverList) == 1 {
 			mapname := strings.TrimSuffix(strings.TrimPrefix(message, "Changed map to '"), "'")
@@ -337,19 +337,19 @@ func forwardServerStatusToDiscord(server *Server, messagetype MessageType, info 
 	description += "**Map:** " + info.Map
 	description += "\n**State:** "+ info.State + " ("+ strconv.Itoa(int(gameTimeSec/60)) + "m " + strconv.Itoa(int(gameTimeSec) % 60) + "s)"
 	description += "\n**Players:** " + strconv.Itoa(info.NumPlayers) + "/" + strconv.Itoa(info.MaxPlayers)
-	
+
 	// if messagetype.SubType == "status" {
 		// description += "\n​\t​\t​\t​\t​\t`Marines ______` "+ strconv.Itoa(info.Teams["1"].NumPlayers) + " Players"
 		// description += "\n​\t​\t​\t​\t​\t`Aliens________` "+ strconv.Itoa(info.Teams["2"].NumPlayers) + " Players"
 		// description += "\n​\t​\t​\t​\t​\t`ReadyRoom ____` "+ strconv.Itoa(info.Teams["0"].NumPlayers) + " Players"
 		// description += "\n​\t​\t​\t​\t​\t`Spectators____`"+ strconv.Itoa(info.Teams["3"].NumPlayers) + " Players"
 	// }
-	
+
 	if messagetype.SubType == "info" {
 		description += "\n**Rookies:** "+ strconv.Itoa(info.NumRookies)
 		description += "\n**Version:** "+ strconv.Itoa(info.Version)
 	}
-	
+
 	fields := make([]*discordgo.MessageEmbedField, 0)
 
 	if messagetype.SubType == "info" && len(info.Teams) == 4 {
@@ -359,35 +359,35 @@ func forwardServerStatusToDiscord(server *Server, messagetype MessageType, info 
 		    Inline: true,
 		}
 		fields = append(fields, marineTeam)
-		
+
 		alienTeam := &discordgo.MessageEmbedField{
 		    Name: "Aliens (" + strconv.Itoa(info.Teams["2"].NumPlayers) + " Players)",
 		    Value: "​" + strings.Join(info.Teams["2"].Players, "\n"),
 		    Inline: true,
 		}
 		fields = append(fields, alienTeam)
-		
+
 		lineBreak := &discordgo.MessageEmbedField{
 			Name: "​",
 			Value: "​",
 			Inline: false,
 		}
 		fields = append(fields, lineBreak)
-		
+
 		rrTeam := &discordgo.MessageEmbedField{
 		    Name: "ReadyRoom (" + strconv.Itoa(info.Teams["0"].NumPlayers) + " Players)",
 		    Value: "​" + strings.Join(info.Teams["0"].Players, "\n"),
 		    Inline: true,
 		}
 		fields = append(fields, rrTeam)
-		
+
 		specTeam := &discordgo.MessageEmbedField{
 		    Name: "Spectators (" + strconv.Itoa(info.Teams["3"].NumPlayers) + " Players)",
 		    Value: "​" + strings.Join(info.Teams["3"].Players, "\n"),
 		    Inline: true,
 		}
 		fields = append(fields, specTeam)
-		
+
 		mods := make([]string, 0)
 		for _, v := range info.Mods {
 			mods = append(mods, v.Name)

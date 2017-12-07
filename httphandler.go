@@ -23,7 +23,7 @@ func startHTTPServer() {
 
 
 func httpHandler(w http.ResponseWriter, request *http.Request) {
-	err := request.ParseForm() 
+	err := request.ParseForm()
 	if err != nil {
 		log.Print(err)
 	}
@@ -38,40 +38,40 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 		log.Println("Recieved message but could not get a channel for '" + serverName + "'. Link a channel first with '!link <servername>'")
 		return
 	}
-	
+
 	// announce that we are now responsible for the response
 	// all other threads will stop themselves
 	server.Mux.Lock()
 	server.ActiveThread++
 	thisThreadNummer := server.ActiveThread
 	server.Mux.Unlock()
-	
+
 	// handle the incoming request
 	groupType := request.PostFormValue("type")
 	subType := request.PostFormValue("sub")
 	messageType := MessageType{groupType, subType}
 	switch messageType.GroupType {
 		case "init": // nothing to do, just keep the connection
-		
+
 		case "chat":
 			player := request.PostFormValue("plyr")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
 			teamNumber, _ := strconv.Atoi(request.PostFormValue("team"))
 			message := request.PostFormValue("msg")
 			forwardChatMessageToDiscord(server, player, SteamID3(steamid), TeamNumber(teamNumber), message)
-			
-		case "player": 
+
+		case "player":
 			player := request.PostFormValue("plyr")
 			steamid, _ := strconv.ParseInt(request.PostFormValue("sid"), 10, 32)
 			playerCount := request.PostFormValue("pc")
 			forwardPlayerEventToDiscord(server, messageType, player, SteamID3(steamid), playerCount)
-			
+
 		case "status": fallthrough
 		case "adminprint":
 			playerCount := request.PostFormValue("pc")
 			message := request.PostFormValue("msg")
 			forwardStatusMessageToDiscord(server, messageType, message, playerCount)
-			
+
 		case "info":
 			serverInfo := ServerInfo{}
 			message := request.PostFormValue("msg")
@@ -80,14 +80,14 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 				log.Println(err.Error())
 			}
 			forwardServerStatusToDiscord(server, messageType, serverInfo)
-			
+
 		case "test":
 			forwardStatusMessageToDiscord(server, messageType, "Test successful", "")
 			return
-			
+
 		default: return
 	}
-	
+
 	// build a response
 	for {
 		select {
@@ -96,7 +96,7 @@ func httpHandler(w http.ResponseWriter, request *http.Request) {
 			response := cmd.Type + recordSep + cmd.User + recordSep + cmd.Message
 			w.Write([]byte(response))
 			return
-			
+
 		default:
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			if thisThreadNummer != server.ActiveThread {
