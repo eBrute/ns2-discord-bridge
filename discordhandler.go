@@ -145,11 +145,16 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		nick := getMemberNickname(authorMember)
-		http.PostForm(server.Config.WebAdmin, url.Values {
-			"request": {"discordsend"},
-			"user":    {nick},
-			"msg":	   {formatDiscordMessage(m)},
-		})
+		v := url.Values {}
+		v.Set("request", "discordsend")
+		v.Set("user", nick)
+		v.Set("msg", formatDiscordMessage(m))
+		_, err := http.PostForm(server.Config.WebAdmin, v)
+
+		if err != nil {
+			log.Println(err.Error())
+		}
+
 		return
 	}
 
@@ -259,14 +264,18 @@ func (r *ResponseHandler) requestServerStatus() {
 		return
 	}
 
-	resp, _ := http.PostForm(server.Config.WebAdmin, url.Values {
+	resp, err := http.PostForm(server.Config.WebAdmin, url.Values {
 		"request": {"discordinfo"},
 	})
+
+	if err != nil {
+		log.Println(err.Error())
+	}
 
 	serverInfo := ServerInfo {}
 	body, _ := ioutil.ReadAll(resp.Body)
 	_ = json.Unmarshal(body, &serverInfo)
-	forwardServerStatusToDiscord(server, MessageType{SubType: "status"}, serverInfo)
+	forwardServerStatusToDiscord(server, MessageType{GroupType: "info", SubType: "status"}, serverInfo)
 }
 
 
@@ -277,14 +286,18 @@ func (r *ResponseHandler) requestServerInfo() {
 		return
 	}
 
-	resp, _ := http.PostForm(server.Config.WebAdmin, url.Values {
+	resp, err := http.PostForm(server.Config.WebAdmin, url.Values {
 		"request": {"discordinfo"},
 	})
+
+	if err != nil {
+		log.Println(err.Error())
+	}
 
 	serverInfo := ServerInfo {}
 	body, _ := ioutil.ReadAll(resp.Body)
 	_ = json.Unmarshal(body, &serverInfo)
-	forwardServerStatusToDiscord(server, MessageType{SubType: "info"}, serverInfo)
+	forwardServerStatusToDiscord(server, MessageType{GroupType: "info", SubType: "info"}, serverInfo)
 }
 
 
@@ -300,9 +313,13 @@ func (r *ResponseHandler) sendRconCommand() {
 		return
 	}
 
-	http.PostForm(server.Config.WebAdmin, url.Values {
+	_, err := http.PostForm(server.Config.WebAdmin, url.Values {
 		"command": {strings.Join(r.messageContent[:], " ")},
 	})
+
+	if err != nil {
+		log.Println(err.Error())
+	}
 }
 
 
