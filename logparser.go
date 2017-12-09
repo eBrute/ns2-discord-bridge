@@ -59,11 +59,13 @@ func startLogParser() {
 				}
 			}
 
-			var slept uint = 0
+			var slept    uint  = 0
+			var filesize int64 = 0
 			for {
 				line, _ := reader.ReadString('\n')
 				if len(line) != 0 {
-					slept = 0
+					slept    = 0
+					filesize = 0
 					if        matches := chat_regexp.FindStringSubmatch(line);       matches != nil {
 						steamid, _    := strconv.ParseInt(matches[2], 10, 32)
 						teamNumber, _ := strconv.Atoi(matches[3])
@@ -122,12 +124,15 @@ func startLogParser() {
 					} else if matches := adminprint_regexp.FindStringSubmatch(line); matches != nil {
 						forwardStatusMessageToDiscord(server, MessageType {GroupType: "adminprint"}, matches[1], "", "")
 					}
-				} else if slept > 10 { // Check if server has restarted
+				} else if slept >= 5 { // Check if server has restarted
 					slept = 0
-					stat, _ := file.Stat()
 					newfile, _ := os.Open(server.Config.LogFilePath)
 					newstat, _ := newfile.Stat()
-					if newstat.Size() != stat.Size() { // It is a new file
+
+					if filesize == 0 {
+						filesize = newstat.Size()
+					} else if newstat.Size() != filesize { // It is a new file
+						filesize = 0
 						log.Println("Server restarted!")
 						file.Close()
 						file   = newfile
