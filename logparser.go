@@ -25,7 +25,7 @@ var (
 		fieldSep + "(.*?)" + // map
 		fieldSep + "(.*)\n") // player count
 
-	changemap_regexp = regexp.MustCompile("^--DISCORD--\\|status" +
+	changemap_regexp = regexp.MustCompile("^--DISCORD--\\|changemap" +
 		fieldSep + "(.*?)" + // map
 		fieldSep + "(.*)\n") // player count
 
@@ -34,11 +34,6 @@ var (
 
 	player_regexp = regexp.MustCompile("^--DISCORD--\\|player" +
 		fieldSep + "(.*?)" + // action
-		fieldSep + "(.*?)" + // name
-		fieldSep + "(.*?)" + // steam id
-		fieldSep + "(.*)\n") // player count
-
-	leave_regexp = regexp.MustCompile("^--DISCORD--\\|leave" +
 		fieldSep + "(.*?)" + // name
 		fieldSep + "(.*?)" + // steam id
 		fieldSep + "(.*)\n") // player count
