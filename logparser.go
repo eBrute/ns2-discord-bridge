@@ -12,33 +12,34 @@ import (
 )
 
 const fieldSep = ""
+const regex_prefix = "^\\[[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\\]--DISCORD--\\|"
 
 var (
-	chat_regexp = regexp.MustCompile("^--DISCORD--\\|chat" +
+	chat_regexp = regexp.MustCompile(regex_prefix + "chat" +
 		fieldSep + "(.*?)" + // name
 		fieldSep + "(.*?)" + // steam id
 		fieldSep + "(.*?)" + // team number
 		fieldSep + "(.*)\n") // message
 
-	status_regexp = regexp.MustCompile("^--DISCORD--\\|status" +
+	status_regexp = regexp.MustCompile(regex_prefix + "status" +
 		fieldSep + "(.*?)" + // status
 		fieldSep + "(.*?)" + // map
 		fieldSep + "(.*)\n") // player count
 
-	changemap_regexp = regexp.MustCompile("^--DISCORD--\\|changemap" +
+	changemap_regexp = regexp.MustCompile(regex_prefix + "changemap" +
 		fieldSep + "(.*?)" + // map
 		fieldSep + "(.*)\n") // player count
 
-	init_regexp = regexp.MustCompile("^--DISCORD--\\|init" +
+	init_regexp = regexp.MustCompile(regex_prefix + "init" +
 		fieldSep + "(.*)\n") // map
 
-	player_regexp = regexp.MustCompile("^--DISCORD--\\|player" +
+	player_regexp = regexp.MustCompile(regex_prefix + "player" +
 		fieldSep + "(.*?)" + // action
 		fieldSep + "(.*?)" + // name
 		fieldSep + "(.*?)" + // steam id
 		fieldSep + "(.*)\n") // player count
 
-	adminprint_regexp = regexp.MustCompile("^--DISCORD--\\|adminprint" +
+	adminprint_regexp = regexp.MustCompile(regex_prefix + "adminprint" +
 		fieldSep + "(.*)\n") // message
 )
 
