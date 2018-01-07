@@ -314,7 +314,7 @@ func (r *ResponseHandler) sendRconCommand() {
 	}
 
 	_, err := http.PostForm(server.Config.WebAdmin, url.Values {
-		"command": {strings.Join(r.messageContent[:], " ")},
+		"rcon": {strings.Join(r.messageContent[:], " ")},
 	})
 
 	if err != nil {
