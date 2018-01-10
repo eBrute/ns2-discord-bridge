@@ -47,18 +47,15 @@ var (
 
 func findLogFile(logpath string) string {
 	dir := filepath.Dir(logpath)
-	prefix := dir + "/log-Server"
+	prefix := dir + string(os.PathSeparator) + "log-Server"
 	var file string
 	var mod_time time.Time
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		log.Println("Got " + path)
 		switch {
 		case path == dir:
 		case info.Mode().IsDir():
-			log.Println("Dir!")
 			return filepath.SkipDir
 		case strings.HasPrefix(path, prefix) && info.ModTime().After(mod_time):
-			log.Println("Found candidate " + path)
 			mod_time = info.ModTime()
 			file = path
 		}
