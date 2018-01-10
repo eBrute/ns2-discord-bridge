@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"log"
+	"path/filepath"
+	"strings"
 )
 
 const fieldSep = ""
@@ -43,9 +45,34 @@ var (
 		fieldSep + "(.*)\n") // message
 )
 
+func findLogFile(logpath string) string {
+	dir := filepath.Dir(logpath)
+	prefix := dir + "/log-Server"
+	var file string
+	var mod_time time.Time
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		log.Println("Got " + path)
+		switch {
+		case path == dir:
+		case info.Mode().IsDir():
+			log.Println("Dir!")
+			return filepath.SkipDir
+		case strings.HasPrefix(path, prefix) && info.ModTime().After(mod_time):
+			log.Println("Found candidate " + path)
+			mod_time = info.ModTime()
+			file = path
+		}
+		return nil
+	})
+	log.Println("Found file " + file)
+	return file
+}
+
 func startLogParser() {
 	for _, server := range serverList {
-		file, _ := os.Open(server.Config.LogFilePath)
+		logfile := server.Config.LogFilePath
+		currlog := findLogFile(logfile)
+		file, _ := os.Open(currlog)
 		reader  := bufio.NewReader(file)
 		go func() {
 			for { // Skip the initial stuff; yes, this isn't the most efficient way
@@ -122,21 +149,34 @@ func startLogParser() {
 					}
 				} else if slept >= 5 { // Check if server has restarted
 					slept = 0
-					newfile, _ := os.Open(server.Config.LogFilePath)
-					newstat, _ := newfile.Stat()
 
-					if filesize == 0 {
-						filesize = newstat.Size()
-					} else if newstat.Size() != filesize { // It is a new file
+					newlog := findLogFile(logfile)
+					if newlog == currlog {
+						newfile, _ := os.Open(currlog)
+						newstat, _ := newfile.Stat()
+
+						if filesize == 0 {
+							filesize = newstat.Size()
+						} else if newstat.Size() != filesize { // It is a new file
+							filesize = 0
+							log.Println("Server restarted!")
+							file.Close()
+							file   = newfile
+							reader = bufio.NewReader(file)
+							forwardStatusMessageToDiscord(server, MessageType {GroupType: "status", SubType: "init"}, "Server restarted!", "", "")
+						} else {
+							time.Sleep(500 * time.Millisecond)
+							newfile.Close()
+						}
+					} else {
+						currlog = newlog
+						newfile, _ := os.Open(currlog)
 						filesize = 0
 						log.Println("Server restarted!")
 						file.Close()
 						file   = newfile
 						reader = bufio.NewReader(file)
 						forwardStatusMessageToDiscord(server, MessageType {GroupType: "status", SubType: "init"}, "Server restarted!", "", "")
-					} else {
-						time.Sleep(500 * time.Millisecond)
-						newfile.Close()
 					}
 				} else {
 					slept += 1
