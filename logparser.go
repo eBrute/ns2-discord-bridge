@@ -61,7 +61,6 @@ func findLogFile(logpath string) string {
 		}
 		return nil
 	})
-	log.Println("Found file " + file)
 	return file
 }
 
@@ -82,8 +81,8 @@ func startLogParser() {
 			var slept    uint  = 0
 			var filesize int64 = 0
 			for {
-				line, _ := reader.ReadString('\n')
-				if len(line) != 0 {
+				line, err := reader.ReadString('\n')
+				if err != nil && len(line) != 0 {
 					slept    = 0
 					filesize = 0
 					if        matches := chat_regexp.FindStringSubmatch(line);       matches != nil {
@@ -149,14 +148,22 @@ func startLogParser() {
 
 					newlog := findLogFile(logfile)
 					if newlog == currlog {
-						newfile, _ := os.Open(currlog)
-						newstat, _ := newfile.Stat()
+						newfile, err := os.Open(currlog)
+						if err != nil {
+							log.Println(err)
+							continue
+						}
+						newstat, err := newfile.Stat()
+						if err != nil {
+							log.Println(err)
+							continue
+						}
 
 						if filesize == 0 {
 							filesize = newstat.Size()
-						} else if newstat.Size() != filesize { // It is a new file
+						} else if newstat.Size() - filesize > 200 || filesize - newstat.Size() > 0 { // It is a new file
+							log.Printf("Server restarted! (size changed, %v != %v)\n", filesize, newstat.Size())
 							filesize = 0
-							log.Println("Server restarted!")
 							file.Close()
 							file   = newfile
 							reader = bufio.NewReader(file)
@@ -167,9 +174,12 @@ func startLogParser() {
 						}
 					} else {
 						currlog = newlog
-						newfile, _ := os.Open(currlog)
+						newfile, err := os.Open(currlog)
+						if err != nil {
+							continue
+						}
 						filesize = 0
-						log.Println("Server restarted!")
+						log.Printf("Server restarted! (log file changed, %v != %v)", currlog, newlog)
 						file.Close()
 						file   = newfile
 						reader = bufio.NewReader(file)
