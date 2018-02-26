@@ -8,7 +8,7 @@ import (
 	"time"
 	"regexp"
 	"strconv"
-	"log"
+	//"log"
 	"path/filepath"
 	"strings"
 )
@@ -79,12 +79,12 @@ func startLogParser() {
 			}
 
 			var slept    uint  = 0
-			var filesize int64 = 0
+			//var filesize int64 = 0
 			for {
 				line, err := reader.ReadString('\n')
 				if err != nil && len(line) != 0 {
 					slept    = 0
-					filesize = 0
+					//filesize = 0
 					if        matches := chat_regexp.FindStringSubmatch(line);       matches != nil {
 						steamid, _    := strconv.ParseInt(matches[2], 10, 32)
 						teamNumber, _ := strconv.Atoi(matches[3])
@@ -146,6 +146,7 @@ func startLogParser() {
 				} else if slept >= 5 { // Check if server has restarted
 					slept = 0
 
+					/*
 					newlog := findLogFile(logfile)
 					if newlog == currlog {
 						newfile, err := os.Open(currlog)
@@ -185,6 +186,7 @@ func startLogParser() {
 						reader = bufio.NewReader(file)
 						forwardStatusMessageToDiscord(server, MessageType {GroupType: "status", SubType: "init"}, "Server restarted!", "", "")
 					}
+					*/
 				} else {
 					slept += 1
 					time.Sleep(500 * time.Millisecond)
