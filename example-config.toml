@@ -21,9 +21,6 @@ message_style = "multiline" # options are: "multiline", "oneline", "text"
 	player_join_format = "%s %p joined %m"
 	player_leave_format = "%s %p left %m"
 
-[httpserver]
-address = ":8080"
-
 [steam]
 web_api_key = "xxxxxx-your-steam-web-api-key" # leave empty to deactivate steam avatars
 
@@ -37,6 +34,10 @@ web_api_key = "xxxxxx-your-steam-web-api-key" # leave empty to deactivate steam 
     server_chat_message_prefix = ""
     server_status_message_prefix = "<:apheriox:298852163759898624> "
     server_icon_url = "https://cdn.discordapp.com/icons/164863821276512267/9a7f55887cb50e053e1b7b14b86af199.png" # leave empty for guild icon
+    webadmin = "http://127.0.0.1:67142"
+    log_file_path                = "/home/las/.config/Natural Selection 2/log-Server.txt"
 
     [servers.example2]
     channelID = "1645231543324534624"
+    webadmin = "http://127.0.0.1:27744"
+    log_file_path                = "/home/las/.config/Natural Selection 2/log-Server-2.txt"

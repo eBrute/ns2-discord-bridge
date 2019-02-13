@@ -16,9 +16,6 @@ type Configuration struct {
 		Rich MessageStyleRichConfig
 		Text MessageStyleTextConfig
 	}
-	Httpserver struct {
-		Address string
-	}
 	Steam struct {
 		WebApiKey string
 	}
@@ -26,34 +23,36 @@ type Configuration struct {
 }
 
 type MessageStyleRichConfig struct {
-	PlayerJoinColor []int
-	PlayerLeaveColor []int
-	StatusColor []int
+	PlayerJoinColor           []int
+	PlayerLeaveColor          []int
+	StatusColor               []int
 	ChatMessageReadyRoomColor []int
-	ChatMessageMarineColor []int
-	ChatMessageAlienColor []int
+	ChatMessageMarineColor    []int
+	ChatMessageAlienColor     []int
 	ChatMessageSpectatorColor []int
 }
 
 type MessageStyleTextConfig struct {
-	ChatMessageFormat string
+	ChatMessageFormat          string
 	ChatMessageReadyRoomPrefix string
-	ChatMessageMarinePrefix string
-	ChatMessageAlienPrefix string
+	ChatMessageMarinePrefix    string
+	ChatMessageAlienPrefix     string
 	ChatMessageSpectatorPrefix string
-	PlayerJoinFormat string
-	PlayerLeaveFormat string
+	PlayerJoinFormat           string
+	PlayerLeaveFormat          string
 }
 
 type ServerConfig struct {
-	ChannelID string
-	StatusChannelID string
-	Admins DiscordIdentityList
-	Muted DiscordIdentityList
-	KeywordNotifications []DiscordIdentityList
-	ServerChatMessagePrefix string
+	ChannelID                 string
+	StatusChannelID           string
+	Admins                    DiscordIdentityList
+	Muted                     DiscordIdentityList
+	KeywordNotifications      []DiscordIdentityList
+	ServerChatMessagePrefix   string
 	ServerStatusMessagePrefix string
-	ServerIconUrl string
+	ServerIconUrl             string
+	WebAdmin                  string
+	LogFilePath               string
 }
 
 var Config Configuration
@@ -65,26 +64,26 @@ func (config *Configuration) getColor(color []int, defaultColor int) int {
 	}
 	return color[0]*256*256 + color[1]*256 + color[2]
 }
-	
-	
+
+
 func (config *Configuration) loadConfig(configFile string) {
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		log.Println("No configuration file found in", configFile)
 		return
 	}
-	
+
 	f, err := os.Open(configFile)
 	if err != nil {
 		panic(err.Error())
 	}
 	defer f.Close()
-	
+
 	log.Println("Reading config file", configFile)
 	buf, err := ioutil.ReadAll(f)
 	if err != nil {
 		panic(err.Error())
 	}
-	
+
 	if err := toml.Unmarshal(buf, &Config); err != nil {
 		panic(err.Error())
 	}
