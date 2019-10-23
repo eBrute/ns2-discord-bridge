@@ -33,7 +33,7 @@ func init() {
 
 
 func startDiscordBot() {
-	
+
 	var err error
 	session, err = discordgo.New("Bot " + Config.Discord.Token)
 	if err != nil {
@@ -57,7 +57,7 @@ func startDiscordBot() {
 		log.Println("error opening connection,", err)
 		return
 	}
-	
+
 	log.Println("Discord Bot is now running.")
 }
 
@@ -111,32 +111,33 @@ func getMemberNickname(member *discordgo.Member) string {
 
 
 func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	
+
 	// ignore all messages created by the bot itself
 	author := m.Author
 	if author.ID == botID {
 		return
 	}
-	
+
 	guild, err := getGuildForChannel(s, m.ChannelID)
 	if err != nil {
-		panic(err.Error())
+		// ignore PMs
+		return
 	}
 	authorMember, err := s.State.Member(guild.ID, author.ID)
 	if err != nil {
 		// ignore non-member messages
 		return
 	}
-	
+
 	commandMatches := commandPattern.FindStringSubmatch(m.Content)
-	
+
 	if len(commandMatches) == 0 { // this is a regular message
 		server, isServerLinked := serverList.getServerByChannelID(m.ChannelID)
 		if !isServerLinked {
 			// this channel isn't linked to any server, so just do nothing
 			return
 		}
-		
+
 		if server.isMuted(authorMember) {
 			return
 		}
@@ -149,7 +150,7 @@ func chatEventHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// message was a discord command
 	messageFields := strings.Fields(m.Content)[1:]
 	responseHandler := createResponseHandler(s, m, messageFields)
-	
+
 	// first handle the commands that dont require a linked server
 	switch commandMatches[1] {
 		case "mute": responseHandler.muteUser()
@@ -206,7 +207,7 @@ func (r *ResponseHandler) muteUser() {
 		r.respond("You are not registered as an admin for server '" + server.Name + "'")
 		return
 	}
-	
+
 	count := 0
 	for _, mention := range r.message.Mentions {
 		mentionedMember, err := r.session.State.Member(r.guild.ID, mention.ID)
