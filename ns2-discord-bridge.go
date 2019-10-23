@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-const version = "v5.4.0"
+const version = "v5.5.0"
 var configFile string
 
 // parse command line arguments
@@ -18,7 +18,7 @@ func init() {
 func main() {
 	log.Println("Version", version)
 	Config.loadConfig(configFile)
-	
+
 	for serverName, v := range Config.Servers {
 		serverList[serverName] = &Server{
 			Name : serverName,
@@ -34,7 +34,7 @@ func main() {
 	for _, server := range serverList {
 		go server.clearOutboundChannelOnInactivity()
 	}
-	
+
 	startDiscordBot() // non-blocking
 	startHTTPServer() // blocking
 }
